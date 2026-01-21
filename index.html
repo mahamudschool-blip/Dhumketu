@@ -1,0 +1,2542 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MRDS Ultimate v6.2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <style>
+        /* --- THEME --- */
+        :root {
+            --primary: #4f46e5; --primary-dark: #3730a3;
+            --bg: #f3f4f6; --surface: #ffffff; --text: #1f2937; --text-light: #6b7280;
+            --border: #e5e7eb; --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 80px; font-size: 15px; }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+        .flex { display: flex; align-items: center; }
+        .flex-between { justify-content: space-between; }
+        .flex-col { flex-direction: column; }
+        .gap-2 { gap: 0.5rem; } .w-full { width: 100%; }
+        .text-center { text-align: center; } .font-bold { font-weight: 700; }
+        .text-sm { font-size: 0.85rem; } .text-xs { font-size: 0.75rem; }
+        .text-primary { color: var(--primary); } .text-danger { color: #ef4444; } 
+        .text-success { color: #10b981; } .text-light { color: var(--text-light); }
+        .text-warning { color: #f59e0b; }
+        .mb-2 { margin-bottom: 0.5rem; } .mb-4 { margin-bottom: 1rem; } .mt-2 { margin-top: 0.5rem; }
+        .p-4 { padding: 1rem; }
+        
+        /* Additional utility classes */
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .bg-indigo-50 { background: #eef2ff; }
+        .border-indigo-100 { border-color: #e0e7eb; }
+        .bg-gray-50 { background: #f9fafb; }
+        .bg-gray-100 { background: #f3f4f6; }
+        .bg-white\/20 { background: rgba(255, 255, 255, 0.2); }
+        .fixed { position: fixed; }
+        .bottom-0 { bottom: 0; }
+        .left-0 { left: 0; }
+        .right-0 { right: 0; }
+        .w-auto { width: auto; }
+        .w-1\/3 { width: 33.333%; }
+        .w-2\/3 { width: 66.666%; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .relative { position: relative; }
+
+        /* --- COMPONENTS --- */
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px;
+            font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%;
+            transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-danger { background: #ef4444; } .btn-success { background: #10b981; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; width: auto; }
+
+        .card { background: var(--surface); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--border); }
+        
+        /* Input & Password Toggle */
+        .input-group { position: relative; margin-bottom: 10px; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+            background: #f9fafb; font-size: 1rem; outline: none; margin-bottom: 10px;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: white; }
+        .pass-toggle { position: absolute; right: 12px; top: 12px; color: var(--text-light); cursor: pointer; }
+
+        /* --- MARQUEE --- */
+        .marquee-container { background: var(--primary); color: white; overflow: hidden; white-space: nowrap; height: 35px; display: flex; align-items: center; }
+        .marquee-content { display: inline-block; padding-left: 100%; animation: scroll 20s linear infinite; font-weight: 600; font-size: 0.9rem; }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        /* --- AUTH & MODAL --- */
+        #authScreen, .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        #authScreen { background: linear-gradient(135deg, var(--primary), #818cf8); }
+        .modal { align-items: flex-end; z-index: 3000; background: rgba(0,0,0,0.5); }
+        .auth-box { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; }
+        .modal-content { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* --- NAVBAR --- */
+        .navbar { position: sticky; top: 0; background: var(--surface); padding: 10px 16px; border-bottom: 1px solid var(--border); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .nav-brand { font-size: 1.2rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; z-index: 1000; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+        .nav-item { background: none; border: none; color: var(--text-light); font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; flex: 1; }
+        .nav-item.active { color: var(--primary); font-weight: 700; }
+        .nav-item i { font-size: 1.2rem; }
+
+        /* EXAM & Q */
+        .q-img { max-width: 100%; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
+        .timer-bar { position: sticky; top: 0; background: white; padding: 10px; z-index: 10; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-weight: bold; }
+        .mcq-opt { padding: 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 5px; display: flex; gap: 10px; cursor: pointer; }
+        .mcq-opt.selected { background: #e0e7ff; border-color: var(--primary); }
+        .mcq-opt input[type="radio"] { margin-right: 8px; }
+        
+        .status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .st-Pending { background: #fef3c7; color: #d97706; }
+        .st-Approved { background: #dcfce7; color: #16a34a; }
+        .st-Rejected { background: #fee2e2; color: #dc2626; }
+
+        /* --- UI ELEMENTS --- */
+        .profile-pic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin: 0 auto 10px; display: block; background: #e0e7ff; }
+        .profile-pic-small { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); background: #e0e7ff; }
+        .post-img { width: 100%; height: auto; border-radius: 8px; margin-top: 8px; max-height: 300px; object-fit: cover; }
+        
+        .msg-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        .admin-reply { background: #e0e7ff; padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 0.9rem; border-left: 3px solid var(--primary); }
+
+        .overflow-x-auto { overflow-x: auto; }
+        .pb-2 { padding-bottom: 0.5rem; }
+
+        /* Logout Button Style */
+        .logout-btn-nav { font-size: 1.2rem; color: #ef4444; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s; }
+        .logout-btn-nav:hover { background: #fee2e2; }
+        
+        /* Image styling */
+        .w-8 { width: 32px; }
+        .h-8 { height: 32px; }
+        .rounded-full { border-radius: 50%; }
+        .object-cover { object-fit: cover; }
+        
+        /* Exam modal specific */
+        #modal-exam .modal-content { border-radius: 0; max-width: 100%; height: 100%; }
+        
+        /* Admin Student Card */
+        .student-card { padding: 12px; border-bottom: 1px solid #eee; }
+        .student-card:last-child { border-bottom: none; }
+        .class-badge { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; }
+        
+        /* Marks styling */
+        .marks-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .marks-high { background: #dcfce7; color: #16a34a; border: 2px solid #bbf7d0; }
+        .marks-medium { background: #fef3c7; color: #d97706; border: 2px solid #fde68a; }
+        .marks-low { background: #fee2e2; color: #dc2626; border: 2px solid #fecaca; }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- NEW STYLES FOR EXPANDABLE POSTS --- */
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            cursor: pointer;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .post-content {
+            padding: 0 12px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+
+        .post-content.expanded {
+            max-height: 5000px;
+            padding: 12px;
+        }
+
+        .translate-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-left: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .translate-btn:hover {
+            background: #0da271;
+        }
+
+        .post-translation {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .post-translation.show {
+            display: block;
+        }
+
+        .post-title-wrapper {
+            flex: 1;
+        }
+
+        .post-date {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .post-expand-icon {
+            color: var(--text-light);
+            transition: transform 0.3s;
+            margin-left: 10px;
+            min-width: 20px;
+        }
+
+        .post-expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        /* Admin translation input */
+        .admin-translation-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .admin-translation-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Post Action Buttons */
+        .post-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-action-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .post-action-btn.edit {
+            color: #3b82f6;
+            border-color: #93c5fd;
+        }
+
+        .post-action-btn.edit:hover {
+            background: #dbeafe;
+        }
+
+        .post-action-btn.delete {
+            color: #ef4444;
+            border-color: #fca5a5;
+        }
+
+        .post-action-btn.delete:hover {
+            background: #fee2e2;
+        }
+
+        /* Edit Post Modal */
+        .edit-post-modal {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* সেটিংস ট্যাবের জন্য নতুন স্টাইল */
+        .settings-section {
+            transition: opacity 0.3s ease;
+        }
+
+        .notice-history-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .notice-history-item:last-child {
+            border-bottom: none;
+        }
+
+        .notice-date {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authScreen">
+        <div class="auth-box">
+            <div class="text-center mb-6">
+                <i class="fas fa-meteor text-primary" style="font-size: 3rem;"></i>
+                <h2 class="mt-2 text-primary">MRDS v6.2</h2>
+                <p class="text-light text-sm">Ultimate Education Platform</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="input-group">
+                    <input type="tel" id="loginMobile" placeholder="মোবাইল নম্বর" value="01700000000">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="loginPass" placeholder="পাসওয়ার্ড" value="1234">
+                    <i class="fas fa-eye pass-toggle" onclick="togglePass('loginPass', this)"></i>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <input type="checkbox" id="rememberMe" style="width: auto;">
+                    <label for="rememberMe" class="text-sm">আমাকে মনে রাখুন</label>
+                </div>
+                <button class="btn mb-4" onclick="handleLogin()">লগইন করুন</button>
+                <div class="flex flex-between text-sm">
+                    <span class="text-primary font-bold cursor-pointer" onclick="toggleAuth('reg')">রেজিস্ট্রেশন</span>
+                    <span class="text-light cursor-pointer" onclick="toggleAuth('admin')">অ্যাডমিন</span>
+                </div>
+            </div>
+            
+            <!-- Admin Login Form -->
+            <div id="adminForm" class="hidden">
+                <h4 class="mb-4 text-center text-danger">অ্যাডমিন লগইন</h4>
+                <input type="text" id="adminUser" placeholder="অ্যাডমিন আইডি" value="admin">
+                <div class="input-group">
+                    <input type="password" id="adminPassInput" placeholder="পাসওয়ার্ড" value="1234">
+                    <i class="fas fa-eye pass-toggle" onclick="togglePass('adminPassInput', this)"></i>
+                </div>
+                <button class="btn btn-danger mb-4" onclick="handleAdminLogin()">অ্যাডমিন প্যানেল</button>
+                <div class="text-center text-sm text-primary cursor-pointer" onclick="toggleAuth('login')">ব্যাকে যান</div>
+            </div>
+            
+            <!-- Registration Form -->
+            <div id="regForm" class="hidden">
+                <h4 class="mb-4 text-center text-success">নতুন রেজিস্ট্রেশন</h4>
+                <input type="text" id="regName" placeholder="নাম">
+                <select id="regClass">
+                    <option value="Class 6">Class 6</option>
+                    <option value="Class 7">Class 7</option>
+                    <option value="Class 8">Class 8</option>
+                    <option value="Class 9">Class 9</option>
+                    <option value="Class 10" selected>Class 10</option>
+                    <option value="SSC">SSC</option>
+                    <option value="HSC">HSC</option>
+                </select>
+                <input type="tel" id="regMob" placeholder="মোবাইল নম্বর">
+                <input type="password" id="regPass" placeholder="পাসওয়ার্ড">
+                <button class="btn btn-success" onclick="handleRegister()">রেজিস্টার করুন</button>
+                <div class="text-center mt-2 text-sm cursor-pointer" onclick="toggleAuth('login')">ব্যাকে যান</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="hidden">
+        <nav class="navbar">
+            <div class="nav-brand"><i class="fas fa-book-reader"></i> <span id="headerTitle">হোম</span></div>
+            <div class="flex gap-3 items-center">
+                <div class="text-right">
+                    <div class="text-xs text-light" id="navName">User</div>
+                    <div class="text-sm font-bold text-success" id="navBal">৳0</div>
+                </div>
+                <img src="" id="navAvatar" style="width:35px; height:35px; border-radius:50%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/35'">
+                <i class="fas fa-power-off logout-btn-nav" onclick="logoutConfirm()" title="Logout"></i>
+            </div>
+        </nav>
+
+        <div class="marquee-container">
+            <div class="marquee-content" id="marqueeText">Loading Notice...</div>
+        </div>
+
+        <div class="p-4">
+            <div id="view-home" class="view">
+                <a href="https://rds5545.blogspot.com/?m=1" target="_blank" class="card flex flex-between" style="text-decoration: none; border-left: 4px solid #f59e0b;">
+                    <div class="flex gap-3">
+                        <i class="fas fa-comet fa-2x text-warning"></i>
+                        <div><b class="text-primary">হ্যালির ধূমকেতু</b><div class="text-xs text-light">অফিসিয়াল ব্লগ</div></div>
+                    </div>
+                    <i class="fas fa-chevron-right text-light"></i>
+                </a>
+
+                <div class="card bg-indigo-50 border-indigo-100 flex flex-between">
+                    <div><h4 class="text-primary">RDS Library</h4><p class="text-xs text-light">Main External Library</p></div>
+                    <a href="https://mahamuds5545-afk.github.io/RDS_Libary/" target="_blank" class="btn btn-sm btn-outline">Visit <i class="fas fa-external-link-alt"></i></a>
+                </div>
+                
+                <h4 class="mb-2 text-light"><i class="fas fa-rss"></i> নিউজফিড</h4>
+                <div id="postsContainer"></div>
+            </div>
+
+            <div id="view-exam" class="view hidden">
+                <h4 class="mb-4 text-light">চলমান এক্সাম</h4>
+                <div id="examList"></div>
+            </div>
+
+            <div id="view-library" class="view hidden">
+                <div class="card flex flex-between">
+                    <div class="flex gap-2"><i class="fas fa-globe fa-2x text-primary"></i><div><b>RDS Main Library</b><div class="text-xs text-light">Official Site</div></div></div>
+                    <a href="https://mahamuds5545-afk.github.io/RDS_Libary/" target="_blank" class="btn btn-sm">Open</a>
+                </div>
+                <h4 class="mb-2 text-light">পিডিএফ ও নোটস</h4>
+                <div id="libList"></div>
+            </div>
+
+            <div id="view-wallet" class="view hidden">
+                <div class="card text-center py-6" style="background: linear-gradient(135deg, #4338ca, #6366f1); color: white;">
+                    <p class="text-sm">বর্তমান ব্যালেন্স</p>
+                    <h1 class="my-2" style="font-size: 2.5rem;" id="walletBigBal">৳0</h1>
+                    <div class="flex gap-2 justify-center mt-4">
+                        <button class="btn bg-white text-primary w-auto px-6" onclick="showModal('deposit')"><i class="fas fa-plus"></i> জমা</button>
+                        <button class="btn bg-white/20 text-white w-auto px-6" onclick="showModal('withdraw')"><i class="fas fa-arrow-down"></i> উত্তোলন</button>
+                    </div>
+                </div>
+                <h4 class="mb-2 text-light">লেনদেন ইতিহাস</h4>
+                <div id="txHistory"></div>
+            </div>
+
+            <div id="view-profile" class="view hidden">
+                <div class="card text-center">
+                    <img id="profileAvatar" src="" class="profile-pic" onerror="this.src='https://via.placeholder.com/100'">
+                    <h3 id="profileName">User</h3>
+                    <p class="text-light text-sm mb-4" id="profileMobile">017XXXXXXXX</p>
+                    <button class="btn btn-sm btn-outline w-full mb-2" onclick="document.getElementById('editSection').classList.toggle('hidden')"><i class="fas fa-edit"></i> এডিট প্রোফাইল</button>
+
+                    <div id="editSection" class="hidden text-left mt-2 bg-gray-50 p-2 rounded">
+                        <label class="text-xs font-bold text-light">নাম পরিবর্তন</label>
+                        <input type="text" id="editName">
+                        <label class="text-xs font-bold text-light">পাসওয়ার্ড পরিবর্তন</label>
+                        <input type="text" id="editPass">
+                        <label class="text-xs font-bold text-light">পিকচার আপলোড</label>
+                        <input type="file" id="editPicFile" accept="image/*">
+                        <button class="btn btn-sm" id="btnUpdateProfile" onclick="updateProfile()">Save Changes</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4 class="mb-2 text-primary"><i class="fas fa-envelope"></i> অ্যাডমিন সাপোর্ট</h4>
+                    <div class="flex gap-2">
+                        <input type="text" id="userMsgInput" placeholder="আপনার সমস্যা লিখুন..." style="margin-bottom:0;">
+                        <button class="btn btn-sm w-auto" onclick="sendMsgToAdmin()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div id="userMsgList" class="mt-4"></div>
+                </div>
+            </div>
+
+            <div id="view-admin" class="view hidden">
+                <div class="card bg-gray-100 flex flex-between">
+                    <span>External Admin Panel</span>
+                    <a href="https://mahamuds5545-afk.github.io/RDS_Libary/admin" target="_blank" class="btn btn-sm btn-outline">Go <i class="fas fa-external-link-alt"></i></a>
+                </div>
+
+                <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <button class="btn btn-sm" onclick="admTab('users')">ছাত্রছাত্রী</button>
+                    <button class="btn btn-sm" onclick="admTab('pay')">পেমেন্ট</button>
+                    <button class="btn btn-sm" onclick="admTab('msg')">মেসেজ</button>
+                    <button class="btn btn-sm" onclick="admTab('exam')">এক্সাম</button>
+                    <button class="btn btn-sm" onclick="admTab('post')">পোস্ট</button>
+                    <button class="btn btn-sm" onclick="admTab('lib')">লাইব্রেরি</button>
+                    <button class="btn btn-sm" onclick="admTab('set')">সেটিংস</button>
+                </div>
+
+                <div id="adm-users" class="adm-sec">
+                    <div class="flex flex-between mb-4">
+                        <h4 class="text-light">ছাত্র তালিকা ও ব্যালেন্স</h4>
+                        <input type="text" id="searchStudent" placeholder="সার্চ করুন..." class="w-auto" style="width: 150px;" onkeyup="searchStudents(this.value)">
+                    </div>
+                    <div id="admUserList"></div>
+                </div>
+
+                <div id="adm-pay" class="adm-sec hidden">
+                    <h4 class="mb-2 text-primary">Pending Requests</h4>
+                    <div id="admPayList"></div>
+                    <h4 class="mb-2 mt-4 text-light">Payment History</h4>
+                    <div id="admPayHistory"></div>
+                </div>
+
+                <div id="adm-msg" class="adm-sec hidden">
+                    <h4 class="mb-2 text-light">শিক্ষার্থীদের মেসেজ</h4>
+                    <div id="admMsgList"></div>
+                </div>
+
+                <div id="adm-exam" class="adm-sec hidden">
+                    <div class="card">
+                        <h4 id="examModalTitle">Create Exam</h4>
+                        <input type="hidden" id="exIdx" value="-1">
+                        <input type="hidden" id="editExamId" value="">
+                        <label class="text-xs">Exam Mode</label>
+                        <select id="exMode" onchange="toggleMode()">
+                            <option value="Native">Native MCQ</option>
+                            <option value="Google">Google Form</option>
+                        </select>
+                        
+                        <input type="text" id="exTitle" placeholder="Exam Title">
+                        <select id="exClass">
+                            <option value="All">All Classes</option>
+                            <option value="Class 6">Class 6</option>
+                            <option value="Class 7">Class 7</option>
+                            <option value="Class 8">Class 8</option>
+                            <option value="Class 9">Class 9</option>
+                            <option value="Class 10">Class 10</option>
+                            <option value="SSC">SSC</option>
+                            <option value="HSC">HSC</option>
+                        </select>
+                        <div class="flex gap-2">
+                            <input type="datetime-local" id="exStart">
+                            <input type="datetime-local" id="exEnd">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="exDur" placeholder="Duration (Min)">
+                            <input type="number" id="exFee" placeholder="Entry Fee">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="exPrize" placeholder="Total Prize" value="0">
+                            <input type="number" id="exGift" placeholder="Gift Amount" value="0">
+                        </div>
+                        
+                        <div id="googleMode" class="hidden">
+                            <input type="text" id="exLink" placeholder="Google Form Link">
+                        </div>
+
+                        <div id="nativeMode">
+                            <div id="qList"></div>
+                            <button class="btn btn-outline mb-2" onclick="addQ()"><i class="fas fa-plus"></i> Add Question</button>
+                        </div>
+
+                        <button class="btn btn-success" id="btnSave" onclick="saveExam()">Save Exam</button>
+                        <button class="btn btn-danger hidden" id="btnCancelEdit" onclick="cancelEditExam()">Cancel Edit</button>
+                    </div>
+                    <h4 class="mb-2 mt-4 text-light">Existing Exams</h4>
+                    <div id="admExList"></div>
+                </div>
+
+                <div id="adm-post" class="adm-sec hidden">
+                    <div class="card">
+                        <h4>নতুন পোস্ট</h4>
+                        <input type="text" id="admPostTitle" placeholder="টাইটেল">
+                        <textarea id="admPostContent" rows="3" placeholder="বিস্তারিত..."></textarea>
+                        <textarea id="admPostTranslation" rows="2" placeholder="বাংলা অনুবাদ (ঐচ্ছিক)"></textarea>
+                        <label class="text-xs">ছবি</label>
+                        <input type="file" id="admPostImg" accept="image/*">
+                        <input type="text" id="admPostLink" placeholder="Link">
+                        <input type="text" id="admPostLinkTxt" placeholder="Button Text">
+                        <button class="btn" id="btnPost" onclick="admAddPost()">পোস্ট করুন</button>
+                    </div>
+
+                    <h4 class="mb-2 mt-6 text-light">সকল পোস্ট</h4>
+                    <div id="allPostsList"></div>
+                </div>
+                
+                <div id="adm-lib" class="adm-sec hidden">
+                    <div class="card">
+                        <h4>লাইব্রেরি</h4>
+                        <input type="text" id="libTitle" placeholder="নাম">
+                        <input type="text" id="libLink" placeholder="Link">
+                        <select id="libType">
+                            <option>PDF</option>
+                            <option>Video</option>
+                        </select>
+                        <button class="btn" onclick="admAddLib()">যোগ করুন</button>
+                    </div>
+                </div>
+                
+                <div id="adm-set" class="adm-sec hidden">
+                    <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                        <button class="btn btn-sm btn-outline" onclick="admSettingsTab('notice')">নোটিশ</button>
+                        <button class="btn btn-sm btn-outline" onclick="admSettingsTab('payment')">পেমেন্ট সেটিংস</button>
+                    </div>
+                    
+                    <!-- নোটিশ সেটিংস -->
+                    <div id="adm-notice-settings" class="settings-section">
+                        <div class="card">
+                            <h4><i class="fas fa-bullhorn"></i> নোটিশ ম্যানেজমেন্ট</h4>
+                            <div class="mb-4">
+                                <label class="text-xs font-bold text-light">বর্তমান নোটিশ</label>
+                                <div class="bg-gray-50 p-3 rounded mt-1" id="currentNoticeDisplay">Loading...</div>
+                            </div>
+                            
+                            <label class="text-xs font-bold text-light">নতুন নোটিশ</label>
+                            <textarea id="setNotice" rows="3" placeholder="নতুন নোটিশ লিখুন..."></textarea>
+                            <button class="btn btn-success" onclick="admSaveNotice()"><i class="fas fa-save"></i> নোটিশ সেভ করুন</button>
+                            
+                            <div class="mt-6">
+                                <h5 class="mb-2 text-light">গত ৫টি নোটিশ</h5>
+                                <div id="noticeHistoryList"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- পেমেন্ট সেটিংস -->
+                    <div id="adm-payment-settings" class="settings-section hidden">
+                        <div class="card">
+                            <h4><i class="fas fa-credit-card"></i> পেমেন্ট সেটিংস</h4>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="text-xs font-bold text-light">bKash নম্বর</label>
+                                    <input type="text" id="setBkash" placeholder="017XXXXXXXX">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-light">Nagad নম্বর</label>
+                                    <input type="text" id="setNagad" placeholder="018XXXXXXXX">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="text-xs font-bold text-light">সর্বনিম্ন ডিপোজিট</label>
+                                    <input type="number" id="setMinDep" placeholder="50">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-light">সর্বনিম্ন উত্তোলন</label>
+                                    <input type="number" id="setMinWd" placeholder="100">
+                                </div>
+                            </div>
+                            
+                            <button class="btn" onclick="admSavePaymentSettings()"><i class="fas fa-save"></i> পেমেন্ট সেটিংস সেভ করুন</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="nav('home', this)"><i class="fas fa-home"></i> হোম</button>
+            <button class="nav-item" onclick="nav('exam', this)"><i class="fas fa-clipboard-check"></i> এক্সাম</button>
+            <button class="nav-item" onclick="nav('library', this)"><i class="fas fa-book"></i> লাইব্রেরি</button>
+            <button class="nav-item" onclick="nav('wallet', this)"><i class="fas fa-wallet"></i> ওয়ালেট</button>
+            <button class="nav-item" onclick="nav('profile', this)"><i class="fas fa-user-circle"></i> প্রোফাইল</button>
+            <button class="nav-item hidden" id="navAdminBtn" onclick="nav('admin', this)"><i class="fas fa-shield-alt"></i></button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-deposit" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex flex-between mb-4">
+                <h3>ডিপোজিট</h3>
+                <i class="fas fa-times" onclick="closeModal()"></i>
+            </div>
+            <div class="card bg-gray-50 text-sm">
+                <div class="flex flex-between mb-2">
+                    <span>bKash: <b id="viewBkash">...</b></span>
+                    <button class="btn-sm btn-outline" onclick="copy('viewBkash')">Copy</button>
+                </div>
+                <div class="flex flex-between">
+                    <span>Nagad: <b id="viewNagad">...</b></span>
+                    <button class="btn-sm btn-outline" onclick="copy('viewNagad')">Copy</button>
+                </div>
+                <div class="text-center mt-2 text-xs text-light">Min Deposit: ৳<span id="viewMinDep"></span></div>
+            </div>
+            <input type="number" id="depAmt" placeholder="টাকার পরিমাণ">
+            <select id="depMethod">
+                <option>bKash</option>
+                <option>Nagad</option>
+            </select>
+            <input type="text" id="depTrx" placeholder="TrxID">
+            <button class="btn btn-success" onclick="reqDep()">Send Request</button>
+        </div>
+    </div>
+
+    <div id="modal-withdraw" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex flex-between mb-4">
+                <h3>উত্তোলন</h3>
+                <i class="fas fa-times" onclick="closeModal()"></i>
+            </div>
+            <p class="text-center text-sm mb-4">Min Withdraw: ৳<span id="viewMinWd"></span></p>
+            <input type="number" id="wdAmt" placeholder="Amount">
+            <select id="wdMethod">
+                <option>bKash</option>
+                <option>Nagad</option>
+            </select>
+            <input type="text" id="wdNum" placeholder="Phone Number">
+            <button class="btn btn-danger" onclick="reqWd()">Withdraw</button>
+        </div>
+    </div>
+
+    <div id="modal-edit-user" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex flex-between mb-4">
+                <h3>Edit Student</h3>
+                <i class="fas fa-times" onclick="closeModal()"></i>
+            </div>
+            <input type="hidden" id="editUserMobile">
+            
+            <div class="text-center mb-4">
+                <img id="editUserAvatar" src="" class="profile-pic-small" style="display: inline-block;" onerror="this.src='https://via.placeholder.com/50'">
+            </div>
+            
+            <input type="text" id="editUserName" placeholder="Name">
+            <select id="editUserClass">
+                <option value="Class 6">Class 6</option>
+                <option value="Class 7">Class 7</option>
+                <option value="Class 8">Class 8</option>
+                <option value="Class 9">Class 9</option>
+                <option value="Class 10">Class 10</option>
+                <option value="SSC">SSC</option>
+                <option value="HSC">HSC</option>
+            </select>
+            
+            <div class="flex gap-2 mb-4">
+                <input type="number" id="editUserBal" placeholder="Balance">
+                <input type="password" id="editUserPass" placeholder="Password">
+            </div>
+            
+            <label class="text-xs font-bold text-light">প্রোফাইল পিকচার পরিবর্তন</label>
+            <input type="file" id="editUserPicFile" accept="image/*">
+            
+            <div class="flex gap-2 mt-4">
+                <button class="btn btn-success" onclick="saveUserChanges()">Save Changes</button>
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-exam" class="modal hidden">
+        <div class="modal-content" style="border-radius: 0; max-width: 100%; height: 100%; padding: 0;">
+            <div class="timer-bar">
+                <span id="runExamTitle">Exam</span>
+                <span id="timerDisplay">00:00</span>
+            </div>
+            <div id="examBody" class="p-4" style="padding-bottom: 80px;"></div>
+            <div style="position: fixed; bottom: 0; left: 0; width: 100%; padding: 12px; background: white; border-top: 1px solid var(--border); display: flex; gap: 8px;">
+                <button class="btn btn-danger w-1/3" onclick="closeModal()">Exit</button>
+                <button class="btn btn-success w-2/3" onclick="submitExam()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Modal for Exam Attendees -->
+    <div id="modal-attendees" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex flex-between mb-4">
+                <h3 id="attendeeTitle">Exam Attendees</h3>
+                <i class="fas fa-times" onclick="closeModal()"></i>
+            </div>
+            <div id="attendeeListContent"></div>
+        </div>
+    </div>
+
+    <!-- Edit Post Modal -->
+    <div id="modal-edit-post" class="modal hidden">
+        <div class="modal-content edit-post-modal">
+            <div class="flex flex-between mb-4">
+                <h3>পোস্ট এডিট করুন</h3>
+                <i class="fas fa-times" onclick="closeModal()"></i>
+            </div>
+            <input type="hidden" id="editPostId">
+            
+            <input type="text" id="editPostTitle" placeholder="টাইটেল">
+            <textarea id="editPostContent" rows="4" placeholder="বিস্তারিত..."></textarea>
+            <textarea id="editPostTranslation" rows="2" placeholder="বাংলা অনুবাদ (ঐচ্ছিক)"></textarea>
+            
+            <div class="mb-4">
+                <label class="text-xs font-bold text-light">বর্তমান ছবি</label>
+                <img id="currentPostImage" src="" style="max-width: 100%; border-radius: 8px; margin-top: 5px; max-height: 200px; object-fit: cover;" onerror="this.style.display='none'">
+            </div>
+            
+            <label class="text-xs font-bold text-light">নতুন ছবি আপলোড করুন (ঐচ্ছিক)</label>
+            <input type="file" id="editPostImg" accept="image/*">
+            
+            <input type="text" id="editPostLink" placeholder="লিংক">
+            <input type="text" id="editPostLinkTxt" placeholder="বাটন টেক্সট">
+            
+            <div class="flex gap-2 mt-6">
+                <button class="btn btn-success" onclick="updatePost()">সেভ করুন</button>
+                <button class="btn btn-danger" onclick="closeModal()">বাতিল করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBC9hwiWQS0rPMyvj3XVPdpExB1RSyQi1E",
+            authDomain: "myblogapp-8e9e5cc8.firebaseapp.com",
+            databaseURL: "https://myblogapp-8e9e5cc8-default-rtdb.firebaseio.com/",
+            projectId: "myblogapp-8e9e5cc8",
+            storageBucket: "myblogapp-8e9e5cc8.firebasestorage.app",
+            messagingSenderId: "995232144893",
+            appId: "1:995232144893:web:9ca49253831a0e06404d94"
+        };
+
+        // ==================== FIREBASE INITIALIZATION ====================
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                console.log("🔥 Firebase initialized successfully");
+            }
+        } catch (error) {
+            console.error("❌ Firebase initialization error:", error);
+        }
+
+        const db = firebase.database();
+        const IMGBB_KEY = 'a6b5ca76210be29fd294f56e3681660f';
+        
+        let CURR_USER = null;
+        let DB_DATA = null;
+        let ACTIVE_EXAM = null;
+        let TIMER_INT = null;
+        let EDITING_EXAM_ID = null;
+        
+        // ==================== DATABASE INITIALIZATION ====================
+        async function initializeDatabase() {
+            try {
+                console.log("📡 Checking database...");
+                
+                const snapshot = await db.ref().once('value');
+                const data = snapshot.val();
+                
+                if (!data || !data.users || !data.config) {
+                    console.log("📦 Initializing database with default data...");
+                    await setupDefaultDatabase();
+                } else {
+                    console.log("✅ Database already initialized");
+                    DB_DATA = data;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("❌ Database initialization error:", error);
+                return false;
+            }
+        }
+
+        async function setupDefaultDatabase() {
+            const defaultData = {
+                config: {
+                    // পেমেন্ট সেটিংস
+                    bkash: "01700000000",
+                    nagad: "01800000000",
+                    minDep: 50,
+                    minWd: 100,
+                    lastUpdated: Date.now()
+                },
+                notice: "🎉 Welcome to MRDS Education Platform v6.2!",
+                users: {
+                    'admin': {
+                        name: 'System Administrator',
+                        pass: '1234',
+                        role: 'admin',
+                        bal: 0,
+                        avatar: '',
+                        class: 'Admin',
+                        created: Date.now(),
+                        lastLogin: null
+                    },
+                    '01700000000': {
+                        name: 'ডেমো শিক্ষার্থী',
+                        pass: '1234',
+                        role: 'student',
+                        bal: 100,
+                        avatar: '',
+                        class: 'Class 10',
+                        created: Date.now(),
+                        lastLogin: null
+                    }
+                },
+                posts: {
+                    'post1': {
+                        t: 'স্বাগতম MRDS এ!',
+                        c: 'এটি একটি ডেমো পোস্ট। আপনি এডমিন প্যানেল থেকে নতুন পোস্ট যোগ করতে পারেন।',
+                        img: '',
+                        link: '',
+                        linkTxt: '',
+                        timestamp: Date.now()
+                    }
+                },
+                exams: {
+                    'exam1': {
+                        title: 'Class 10 গণিত টেস্ট',
+                        mode: 'Native',
+                        class: 'Class 10',
+                        start: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
+                        end: new Date(Date.now() + 172800000).toISOString().slice(0, 16),
+                        dur: 30,
+                        fee: 10,
+                        prize: 100,
+                        giftAmount: 20,
+                        questions: [
+                            {
+                                type: 'text',
+                                val: '২ + ২ = কত?',
+                                opts: ['৩', '৪', '৫', '৬'],
+                                ans: 1
+                            },
+                            {
+                                type: 'text',
+                                val: '১৬-এর বর্গমূল কত?',
+                                opts: ['২', '৩', '৪', '৫'],
+                                ans: 2
+                            }
+                        ],
+                        created: Date.now()
+                    }
+                },
+                library: {
+                    'lib1': {
+                        title: 'Class 10 Mathematics PDF',
+                        link: 'https://example.com/math.pdf',
+                        type: 'PDF',
+                        added: Date.now()
+                    }
+                },
+                txs: {},
+                results: {},
+                msgs: {},
+                gifts: {},
+                noticeHistory: {}
+            };
+
+            try {
+                await db.ref().set(defaultData);
+                console.log("✅ Default database setup completed");
+                DB_DATA = defaultData;
+                return true;
+            } catch (error) {
+                console.error("❌ Database setup failed:", error);
+                return false;
+            }
+        }
+
+        // ==================== AUTHENTICATION FUNCTIONS ====================
+        document.addEventListener("DOMContentLoaded", async () => {
+            console.log("🚀 MRDS App Loading...");
+            
+            const dbReady = await initializeDatabase();
+            if (!dbReady) {
+                document.getElementById('authScreen').innerHTML = `
+                    <div class="auth-box">
+                        <div class="text-center text-danger">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-4"></i>
+                            <h3>Database Connection Error</h3>
+                            <p class="text-sm mt-2">Please check your Firebase configuration and try again.</p>
+                            <button class="btn mt-4" onclick="location.reload()">Retry</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const savedUser = localStorage.getItem('mrds_user');
+            const savedPass = localStorage.getItem('mrds_pass');
+            
+            if (savedUser && savedPass) {
+                document.getElementById('loginMobile').value = savedUser;
+                document.getElementById('loginPass').value = savedPass;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+
+        function togglePass(id, icon) {
+            const input = document.getElementById(id);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function toggleAuth(type) {
+            ['loginForm', 'regForm', 'adminForm'].forEach(i => {
+                document.getElementById(i).classList.add('hidden');
+            });
+            document.getElementById(type + 'Form').classList.remove('hidden');
+        }
+
+        async function handleAdminLogin() {
+            const username = document.getElementById('adminUser').value.trim();
+            const password = document.getElementById('adminPassInput').value.trim();
+            
+            if (!username || !password) {
+                alert("অ্যাডমিন আইডি এবং পাসওয়ার্ড দিন");
+                return;
+            }
+            
+            const btn = document.querySelector('#adminForm button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            btn.disabled = true;
+            
+            try {
+                const userSnapshot = await db.ref('users/' + username).once('value');
+                const user = userSnapshot.val();
+                
+                if (!user) {
+                    alert("❌ অ্যাডমিন ইউজার খুঁজে পাওয়া যায়নি");
+                    return;
+                }
+                
+                if (user.role !== 'admin') {
+                    alert("❌ এই ইউজার অ্যাডমিন নন");
+                    return;
+                }
+                
+                if (user.pass !== password) {
+                    alert("❌ ভুল পাসওয়ার্ড");
+                    return;
+                }
+                
+                await db.ref('users/' + username + '/lastLogin').set(Date.now());
+                
+                CURR_USER = {
+                    id: username,
+                    ...user
+                };
+                
+                alert("✅ অ্যাডমিন লগইন সফল!\n\nWelcome " + user.name);
+                
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                
+                setupAdminFeatures();
+                renderApp();
+                
+            } catch (error) {
+                console.error("❌ Admin login error:", error);
+                alert("লগইন ত্রুটি: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function handleLogin() {
+            const mobile = document.getElementById('loginMobile').value.trim();
+            const password = document.getElementById('loginPass').value.trim();
+            const remember = document.getElementById('rememberMe').checked;
+            
+            if (!mobile || !password) {
+                alert("মোবাইল নম্বর এবং পাসওয়ার্ড দিন");
+                return;
+            }
+            
+            const btn = document.querySelector('#loginForm button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> লগইন হচ্ছে...';
+            btn.disabled = true;
+            
+            try {
+                const userSnapshot = await db.ref('users/' + mobile).once('value');
+                const user = userSnapshot.val();
+                
+                if (!user) {
+                    alert("❌ এই মোবাইল নম্বরে কোন অ্যাকাউন্ট নেই");
+                    return;
+                }
+                
+                if (user.pass !== password) {
+                    alert("❌ ভুল পাসওয়ার্ড");
+                    return;
+                }
+                
+                if (remember) {
+                    localStorage.setItem('mrds_user', mobile);
+                    localStorage.setItem('mrds_pass', password);
+                } else {
+                    localStorage.removeItem('mrds_user');
+                    localStorage.removeItem('mrds_pass');
+                }
+                
+                await db.ref('users/' + mobile + '/lastLogin').set(Date.now());
+                
+                CURR_USER = {
+                    id: mobile,
+                    ...user
+                };
+                
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                
+                if (user.role === 'admin') {
+                    setupAdminFeatures();
+                }
+                
+                renderApp();
+                
+            } catch (error) {
+                console.error("❌ Login error:", error);
+                alert("লগইন ত্রুটি: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function handleRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const className = document.getElementById('regClass').value;
+            const mobile = document.getElementById('regMob').value.trim();
+            const password = document.getElementById('regPass').value.trim();
+            
+            if (!name || !mobile || !password) {
+                alert("সব তথ্য পূরণ করুন");
+                return;
+            }
+            
+            if (mobile.length !== 11 || !mobile.startsWith('01')) {
+                alert("সঠিক মোবাইল নম্বর দিন (11 ডিজিট, 01 দিয়ে শুরু)");
+                return;
+            }
+            
+            const userSnapshot = await db.ref('users/' + mobile).once('value');
+            if (userSnapshot.exists()) {
+                alert("এই মোবাইল নম্বর ইতিমধ্যে রেজিস্টার্ড");
+                toggleAuth('login');
+                return;
+            }
+            
+            const newUser = {
+                name: name,
+                pass: password,
+                role: 'student',
+                bal: 0,
+                avatar: '',
+                class: className,
+                created: Date.now(),
+                lastLogin: null
+            };
+            
+            try {
+                await db.ref('users/' + mobile).set(newUser);
+                alert("✅ রেজিস্ট্রেশন সফল!\n\nআপনার মোবাইল: " + mobile + "\nপাসওয়ার্ড: " + password);
+                
+                document.getElementById('loginMobile').value = mobile;
+                document.getElementById('loginPass').value = password;
+                toggleAuth('login');
+                
+            } catch (error) {
+                alert("রেজিস্ট্রেশন ত্রুটি: " + error.message);
+            }
+        }
+
+        function setupAdminFeatures() {
+            document.getElementById('navAdminBtn').classList.remove('hidden');
+            console.log("🛠️ Admin features enabled for:", CURR_USER.name);
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+        async function renderApp() {
+            if (!CURR_USER) return;
+            
+            console.log("🎨 Rendering app for:", CURR_USER.name);
+            
+            try {
+                const snapshot = await db.ref().once('value');
+                DB_DATA = snapshot.val();
+                
+                updateUserUI();
+                renderConfig();
+                renderPosts();
+                renderExams();
+                renderLibrary();
+                renderTransactions();
+                renderMessages();
+                
+                if (CURR_USER.role === 'admin') {
+                    renderAdminDashboard();
+                }
+                
+            } catch (error) {
+                console.error("❌ Render error:", error);
+            }
+        }
+
+        function updateUserUI() {
+            if (!CURR_USER) return;
+            
+            document.getElementById('navName').innerText = CURR_USER.name;
+            document.getElementById('profileName').innerText = CURR_USER.name;
+            document.getElementById('navBal').innerText = `৳${CURR_USER.bal || 0}`;
+            document.getElementById('walletBigBal').innerText = `৳${CURR_USER.bal || 0}`;
+            document.getElementById('navAvatar').src = CURR_USER.avatar || 'https://via.placeholder.com/35';
+            document.getElementById('profileAvatar').src = CURR_USER.avatar || 'https://via.placeholder.com/100';
+            document.getElementById('profileMobile').innerText = CURR_USER.id;
+            
+            if (DB_DATA && DB_DATA.notice) {
+                document.getElementById('marqueeText').innerText = DB_DATA.notice || 'Welcome to MRDS';
+            }
+        }
+
+        function renderConfig() {
+            if (!DB_DATA) return;
+            
+            // নোটিশ মার্কুইতে দেখান
+            document.getElementById('marqueeText').innerText = DB_DATA.notice || 'Welcome to MRDS';
+            
+            // পেমেন্ট সেটিংস দেখান
+            if (DB_DATA.config) {
+                const config = DB_DATA.config;
+                document.getElementById('viewBkash').innerText = config.bkash || 'N/A';
+                document.getElementById('viewNagad').innerText = config.nagad || 'N/A';
+                document.getElementById('viewMinDep').innerText = config.minDep || 0;
+                document.getElementById('viewMinWd').innerText = config.minWd || 0;
+            }
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            if (!container) return;
+
+            if (!DB_DATA || !DB_DATA.posts) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">কোনো নিউজ বা নোটিশ নেই</p></div>';
+                return;
+            }
+
+            const posts = DB_DATA.posts;
+            container.innerHTML = '';
+            
+            Object.entries(posts)
+                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+                .forEach(([id, post]) => {
+                    // Detect if post is in English (simple detection)
+                    const isEnglish = /[a-zA-Z]/.test(post.t || '') || /[a-zA-Z]/.test(post.c || '');
+                    
+                    let imgHtml = '';
+                    if(post.img) {
+                        imgHtml = `<img src="${post.img}" class="post-img" style="width:100%; border-radius:8px; margin-top:10px; margin-bottom:10px; border:1px solid #eee;">`;
+                    }
+
+                    let linkHtml = '';
+                    if(post.link) {
+                        linkHtml = `<a href="${post.link}" target="_blank" class="btn btn-sm btn-outline mt-2 w-auto" style="display:inline-block;">
+                            ${post.linkTxt || 'লিংক খুলুন'} <i class="fas fa-external-link-alt"></i>
+                        </a>`;
+                    }
+
+                    const dateStr = post.timestamp ? new Date(post.timestamp).toLocaleDateString('bn-BD', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : '';
+
+                    const html = `
+                        <div class="card mb-3" style="border-left: 4px solid var(--primary);">
+                            <div class="post-header" onclick="togglePost('${id}')">
+                                <div class="post-title-wrapper">
+                                    <div class="flex items-center">
+                                        <h3 class="text-primary" style="font-size: 1.2rem; font-weight: bold; margin: 0;">
+                                            ${post.t || post.title || 'Untitled'}
+                                        </h3>
+                                        ${isEnglish && (post.bnTranslation || CURR_USER?.role === 'admin') ? 
+                                            `<button class="translate-btn" onclick="showTranslation(event, '${id}')">বাংলা</button>` : ''}
+                                    </div>
+                                    <div class="post-date"><i class="far fa-clock"></i> ${dateStr}</div>
+                                </div>
+                                <i class="fas fa-chevron-down post-expand-icon" id="post-icon-${id}"></i>
+                            </div>
+                            
+                            <div class="post-content" id="post-content-${id}">
+                                <p class="text-sm" style="white-space: pre-wrap; color: #4b5563; line-height: 1.6;">${post.c || post.content || ''}</p>
+                                
+                                ${imgHtml}
+                                ${linkHtml}
+                                
+                                <!-- Translation section (hidden by default) -->
+                                ${post.bnTranslation ? 
+                                    `<div class="post-translation" id="translation-${id}">
+                                        <strong><i class="fas fa-language"></i> বাংলা অনুবাদ:</strong><br>
+                                        ${post.bnTranslation}
+                                    </div>` : ''
+                                }
+                                
+                                <!-- Admin actions -->
+                                ${CURR_USER?.role === 'admin' ? `
+                                    <div class="admin-translation-box mt-3">
+                                        <label class="admin-translation-label">বাংলা অনুবাদ যোগ/সম্পাদনা করুন</label>
+                                        <textarea id="admin-translation-${id}" placeholder="বাংলা অনুবাদ লিখুন..." rows="2" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border);">${post.bnTranslation || ''}</textarea>
+                                        <div class="post-actions">
+                                            <button class="post-action-btn edit" onclick="editPost('${id}')">
+                                                <i class="fas fa-edit"></i> এডিট
+                                            </button>
+                                            <button class="post-action-btn delete" onclick="deletePost('${id}')">
+                                                <i class="fas fa-trash"></i> ডিলিট
+                                            </button>
+                                            <button class="btn btn-sm" onclick="saveTranslation('${id}')">সেভ অনুবাদ</button>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.innerHTML += html;
+                });
+        }
+
+        // ==================== POST INTERACTION FUNCTIONS ====================
+        function togglePost(postId) {
+            const content = document.getElementById('post-content-' + postId);
+            const icon = document.getElementById('post-icon-' + postId);
+            
+            content.classList.toggle('expanded');
+            icon.classList.toggle('expanded');
+            
+            if (content.classList.contains('expanded')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                
+                // Also hide translation when collapsing
+                const translation = document.getElementById('translation-' + postId);
+                if (translation) {
+                    translation.classList.remove('show');
+                }
+            }
+        }
+
+        function showTranslation(event, postId) {
+            event.stopPropagation(); // Prevent post toggle
+            
+            const translationDiv = document.getElementById('translation-' + postId);
+            const contentDiv = document.getElementById('post-content-' + postId);
+            
+            // Make sure post is expanded
+            if (!contentDiv.classList.contains('expanded')) {
+                contentDiv.classList.add('expanded');
+                const icon = document.getElementById('post-icon-' + postId);
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                icon.classList.add('expanded');
+            }
+            
+            // Toggle translation visibility
+            if (translationDiv) {
+                translationDiv.classList.toggle('show');
+            }
+            
+            // If admin, focus on translation textarea
+            if (CURR_USER?.role === 'admin') {
+                const adminTextarea = document.getElementById('admin-translation-' + postId);
+                if (adminTextarea) {
+                    setTimeout(() => {
+                        adminTextarea.focus();
+                    }, 300);
+                }
+            }
+        }
+
+        // ==================== POST EDIT & DELETE FUNCTIONS ====================
+        async function editPost(postId) {
+            try {
+                const postSnap = await db.ref('posts/' + postId).once('value');
+                const post = postSnap.val();
+                
+                if (!post) {
+                    alert('Post not found');
+                    return;
+                }
+                
+                // Fill form with post data
+                document.getElementById('editPostId').value = postId;
+                document.getElementById('editPostTitle').value = post.t || post.title || '';
+                document.getElementById('editPostContent').value = post.c || post.content || '';
+                document.getElementById('editPostTranslation').value = post.bnTranslation || '';
+                document.getElementById('editPostLink').value = post.link || '';
+                document.getElementById('editPostLinkTxt').value = post.linkTxt || '';
+                
+                // Set current image
+                const currentImg = document.getElementById('currentPostImage');
+                if (post.img) {
+                    currentImg.src = post.img;
+                    currentImg.style.display = 'block';
+                } else {
+                    currentImg.style.display = 'none';
+                }
+                
+                // Clear file input
+                document.getElementById('editPostImg').value = '';
+                
+                showModal('edit-post');
+                
+            } catch (error) {
+                console.error('Error loading post for edit:', error);
+                alert('Failed to load post: ' + error.message);
+            }
+        }
+
+        async function updatePost() {
+            const postId = document.getElementById('editPostId').value;
+            const title = document.getElementById('editPostTitle').value.trim();
+            const content = document.getElementById('editPostContent').value.trim();
+            const translation = document.getElementById('editPostTranslation').value.trim();
+            const link = document.getElementById('editPostLink').value.trim();
+            const linkTxt = document.getElementById('editPostLinkTxt').value.trim();
+            const fileInput = document.getElementById('editPostImg').files[0];
+            
+            if (!title) {
+                alert('পোস্টের টাইটেল দিতে হবে!');
+                return;
+            }
+
+            const btn = document.querySelector('#modal-edit-post .btn-success');
+            const originalText = btn.innerText;
+            btn.innerText = "আপডেট হচ্ছে...";
+            btn.disabled = true;
+
+            try {
+                let updates = {
+                    t: title,
+                    c: content,
+                    bnTranslation: translation,
+                    link: link,
+                    linkTxt: linkTxt,
+                    updatedAt: Date.now()
+                };
+
+                // Upload new image if provided
+                if (fileInput) {
+                    btn.innerText = "ছবি আপলোড হচ্ছে...";
+                    const imgUrl = await uploadImg(fileInput);
+                    if (imgUrl) {
+                        updates.img = imgUrl;
+                    }
+                }
+
+                await db.ref('posts/' + postId).update(updates);
+                
+                alert('✅ পোস্ট সফলভাবে আপডেট হয়েছে!');
+                closeModal();
+                renderApp();
+                
+            } catch (error) {
+                console.error("Post update error:", error);
+                alert("❌ পোস্ট আপডেট করা যায়নি: " + error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('আপনি কি নিশ্চিত যে এই পোস্টটি ডিলিট করতে চান?\n\nএই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।')) {
+                return;
+            }
+
+            try {
+                await db.ref('posts/' + postId).remove();
+                alert('✅ পোস্ট সফলভাবে ডিলিট হয়েছে!');
+                renderApp();
+            } catch (error) {
+                console.error('Delete post error:', error);
+                alert('❌ পোস্ট ডিলিট করা যায়নি: ' + error.message);
+            }
+        }
+
+        async function saveTranslation(postId) {
+            if (CURR_USER?.role !== 'admin') return;
+            
+            const translationText = document.getElementById('admin-translation-' + postId).value.trim();
+            
+            try {
+                await db.ref('posts/' + postId + '/bnTranslation').set(translationText);
+                
+                // Update UI
+                const translationDiv = document.getElementById('translation-' + postId);
+                if (translationDiv) {
+                    if (translationText) {
+                        translationDiv.innerHTML = `<strong><i class="fas fa-language"></i> বাংলা অনুবাদ:</strong><br>${translationText}`;
+                        translationDiv.classList.add('show');
+                    } else {
+                        translationDiv.remove();
+                    }
+                } else if (translationText) {
+                    // Create new translation div if it doesn't exist
+                    const contentDiv = document.getElementById('post-content-' + postId);
+                    const newTranslationDiv = document.createElement('div');
+                    newTranslationDiv.className = 'post-translation show';
+                    newTranslationDiv.id = 'translation-' + postId;
+                    newTranslationDiv.innerHTML = `<strong><i class="fas fa-language"></i> বাংলা অনুবাদ:</strong><br>${translationText}`;
+                    
+                    // Insert before admin translation box
+                    const adminBox = contentDiv.querySelector('.admin-translation-box');
+                    if (adminBox) {
+                        contentDiv.insertBefore(newTranslationDiv, adminBox);
+                    }
+                }
+                
+                // Update button text if it exists
+                const translateBtn = document.querySelector(`button[onclick*="${postId}"]`);
+                if (translateBtn && !translationText) {
+                    translateBtn.remove();
+                }
+                
+                alert('✅ অনুবাদ সেভ হয়েছে!');
+            } catch (error) {
+                console.error('Translation save error:', error);
+                alert('❌ অনুবাদ সেভ করা যায়নি: ' + error.message);
+            }
+        }
+
+        function renderExams() {
+            const container = document.getElementById('examList');
+            if (!container || !DB_DATA || !DB_DATA.exams) return;
+            
+            container.innerHTML = '';
+            const now = new Date();
+            const userClass = CURR_USER.class || 'Class 10';
+            
+            Object.entries(DB_DATA.exams).forEach(([id, exam]) => {
+                const canAttend = exam.class === 'All' || exam.class === userClass;
+                const start = new Date(exam.start || now);
+                const end = new Date(exam.end || now);
+                let status = now < start ? 'Upcoming' : (now > end ? 'Ended' : 'Live');
+                
+                let btn = '';
+                if (!canAttend) {
+                    btn = `<button class="btn btn-sm btn-outline" disabled>${exam.class} এর জন্য</button>`;
+                } else if (status === 'Live') {
+                    btn = `<button class="btn btn-sm" onclick="startExam('${id}')">Start</button>`;
+                } else {
+                    btn = `<button class="btn btn-sm btn-outline" disabled>${status}</button>`;
+                }
+                
+                container.innerHTML += `
+                    <div class="card">
+                        <div class="flex flex-between">
+                            <b>${exam.title}</b>
+                            <span class="text-xs font-bold ${status === 'Live' ? 'text-danger' : 'text-light'}">${status}</span>
+                        </div>
+                        <div class="text-xs text-light my-2">
+                            ${exam.class} | Fee: ৳${exam.fee || 0} | Duration: ${exam.dur || 0} min
+                        </div>
+                        ${btn}
+                    </div>
+                `;
+            });
+        }
+
+        function renderLibrary() {
+            const container = document.getElementById('libList');
+            if (!container || !DB_DATA || !DB_DATA.library) return;
+            
+            container.innerHTML = '';
+            const library = DB_DATA.library;
+            
+            if (Object.keys(library).length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No library items yet</p></div>';
+                return;
+            }
+            
+            Object.values(library).forEach(item => {
+                container.innerHTML += `
+                    <div class="card flex flex-between">
+                        <div class="flex gap-2">
+                            <i class="fas ${item.type === 'Video' ? 'fa-video' : 'fa-file-pdf'} fa-2x ${item.type === 'Video' ? 'text-danger' : 'text-primary'}"></i>
+                            <div>
+                                <b>${item.title}</b>
+                                <div class="text-xs text-light">${item.type}</div>
+                            </div>
+                        </div>
+                        <a href="${item.link}" target="_blank" class="btn btn-sm btn-outline">Open</a>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTransactions() {
+            const container = document.getElementById('txHistory');
+            if (!container || !DB_DATA || !DB_DATA.txs) return;
+            
+            container.innerHTML = '';
+            const transactions = DB_DATA.txs;
+            
+            if (Object.keys(transactions).length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No transactions yet</p></div>';
+                return;
+            }
+            
+            Object.entries(transactions)
+                .filter(([, t]) => t.uid === CURR_USER.id)
+                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+                .forEach(([id, t]) => {
+                    container.innerHTML += `
+                        <div class="card p-2 flex flex-between">
+                            <div>
+                                <div class="font-bold text-xs">${t.type}</div>
+                                <div class="text-xs text-light">${t.method || ''} ${t.trx ? '| ' + t.trx : ''}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold">৳${t.amount}</div>
+                                <div class="status-badge st-${t.status}">${t.status}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('userMsgList');
+            if (!container || !DB_DATA || !DB_DATA.msgs) return;
+            
+            container.innerHTML = '';
+            const messages = DB_DATA.msgs;
+            
+            if (Object.keys(messages).length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No messages yet</p></div>';
+                return;
+            }
+            
+            Object.entries(messages)
+                .filter(([, m]) => m.uid === CURR_USER.id)
+                .sort(([, a], [, b]) => (b.time || 0) - (a.time || 0))
+                .forEach(([id, m]) => {
+                    container.innerHTML += `
+                        <div class="msg-box">
+                            <div class="text-sm font-bold text-light">You: ${m.text}</div>
+                            ${m.reply ? `<div class="admin-reply"><b>Admin:</b> ${m.reply}</div>` : '<div class="text-xs text-light mt-1">Waiting for reply</div>'}
+                        </div>
+                    `;
+                });
+        }
+
+        // ==================== ADMIN FUNCTIONS ====================
+        async function renderAdminDashboard() {
+            if (!DB_DATA) return;
+            
+            renderAdminUsers();
+            renderAdminPayments();
+            renderAdminMessages();
+            renderAdminExams();
+            renderAllPosts();
+            
+            // সেটিংস ট্যাব প্রস্তুত করুন
+            loadNoticeSettings();
+            loadPaymentSettings();
+        }
+
+        function renderAllPosts() {
+            const container = document.getElementById('allPostsList');
+            if (!container || !DB_DATA || !DB_DATA.posts) return;
+            
+            container.innerHTML = '';
+            const posts = DB_DATA.posts;
+            
+            if (Object.keys(posts).length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No posts yet</p></div>';
+                return;
+            }
+            
+            Object.entries(posts)
+                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+                .forEach(([id, post]) => {
+                    const dateStr = post.timestamp ? new Date(post.timestamp).toLocaleDateString('bn-BD', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    }) : '';
+                    
+                    const shortContent = (post.c || '').substring(0, 100) + ((post.c || '').length > 100 ? '...' : '');
+                    
+                    container.innerHTML += `
+                        <div class="card mb-3">
+                            <div class="flex flex-between items-start">
+                                <div style="flex: 1;">
+                                    <b>${post.t || post.title || 'Untitled'}</b>
+                                    <div class="text-xs text-light mb-2">${dateStr}</div>
+                                    <div class="text-sm text-light" style="white-space: pre-wrap;">${shortContent}</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-sm" onclick="editPost('${id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deletePost('${id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+
+        function renderAdminUsers() {
+            const container = document.getElementById('admUserList');
+            if (!container || !DB_DATA || !DB_DATA.users) return;
+            
+            container.innerHTML = '';
+            const users = DB_DATA.users;
+            
+            const students = Object.entries(users)
+                .filter(([mobile, user]) => user.role === 'student')
+                .sort(([, a], [, b]) => a.name.localeCompare(b.name));
+            
+            if (students.length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No students found</p></div>';
+                return;
+            }
+            
+            students.forEach(([mobile, user]) => {
+                container.innerHTML += `
+                    <div class="card student-card">
+                        <div class="flex gap-3 items-center">
+                            <img src="${user.avatar || 'https://via.placeholder.com/50'}" 
+                                 class="profile-pic-small"
+                                 onerror="this.src='https://via.placeholder.com/50'">
+                            <div class="flex-1">
+                                <div class="flex flex-between items-start">
+                                    <div>
+                                        <b>${user.name}</b>
+                                        <div class="text-xs text-light">${mobile}</div>
+                                    </div>
+                                    <span class="font-bold text-primary">৳${user.bal || 0}</span>
+                                </div>
+                                <div class="flex flex-between items-center mt-2">
+                                    <span class="class-badge">${user.class || 'Not set'}</span>
+                                    <div class="flex gap-2">
+                                        <button class="btn btn-sm btn-outline" onclick="editStudent('${mobile}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteStudent('${mobile}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAdminPayments() {
+            const pendingList = document.getElementById('admPayList');
+            const historyList = document.getElementById('admPayHistory');
+            
+            if (!pendingList || !historyList || !DB_DATA || !DB_DATA.txs) return;
+            
+            pendingList.innerHTML = '';
+            historyList.innerHTML = '';
+            
+            const transactions = DB_DATA.txs;
+            
+            if (Object.keys(transactions).length === 0) return;
+            
+            Object.entries(transactions)
+                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+                .forEach(([id, t]) => {
+                    const html = `
+                        <div class="card">
+                            <div class="flex flex-between">
+                                <div>
+                                    <b>${t.type}</b>
+                                    <div class="text-xs text-light">${t.uid} | ${t.method || ''}</div>
+                                </div>
+                                <b>৳${t.amount}</b>
+                            </div>
+                            <div class="text-xs text-light mb-2">${t.trx || ''}</div>
+                            <div class="status-badge st-${t.status}">${t.status}</div>
+                            ${t.status === 'Pending' ? `
+                                <div class="flex gap-2 mt-2">
+                                    <button class="btn btn-success btn-sm" onclick="admTx('${id}', true)">
+                                        Approve
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="admTx('${id}', false)">
+                                        Reject
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    if (t.status === 'Pending') {
+                        pendingList.innerHTML += html;
+                    } else {
+                        historyList.innerHTML += html;
+                    }
+                });
+        }
+
+        function renderAdminMessages() {
+            const container = document.getElementById('admMsgList');
+            if (!container || !DB_DATA || !DB_DATA.msgs) return;
+            
+            container.innerHTML = '';
+            const messages = DB_DATA.msgs;
+            
+            if (Object.keys(messages).length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No messages yet</p></div>';
+                return;
+            }
+            
+            Object.entries(messages)
+                .sort(([, a], [, b]) => (b.time || 0) - (a.time || 0))
+                .forEach(([id, m]) => {
+                    container.innerHTML += `
+                        <div class="card">
+                            <div class="font-bold text-sm mb-1">
+                                ${m.name} <small class="text-light">(${m.uid})</small>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded mb-2">${m.text}</div>
+                            ${m.reply ? 
+                                `<div class="admin-reply">Reply: ${m.reply}</div>` :
+                                `<div class="flex gap-2">
+                                    <input type="text" id="rep-${id}" placeholder="Reply..." style="margin-bottom:0">
+                                    <button class="btn btn-sm w-auto" onclick="admReply('${id}')">Send</button>
+                                </div>`
+                            }
+                        </div>
+                    `;
+                });
+        }
+
+        function renderAdminExams() {
+            const container = document.getElementById('admExList');
+            if (!container || !DB_DATA || !DB_DATA.exams) return;
+            
+            container.innerHTML = '';
+            const exams = DB_DATA.exams;
+            
+            if (Object.keys(exams).length === 0) {
+                container.innerHTML = '<div class="card text-center p-4"><p class="text-light">No exams created yet</p></div>';
+                return;
+            }
+            
+            Object.entries(exams).forEach(([id, exam]) => {
+                container.innerHTML += `
+                    <div class="card flex flex-between">
+                        <div>
+                            <b>${exam.title}</b>
+                            <div class="text-xs text-light">${exam.class} | ${exam.mode} | Fee: ৳${exam.fee || 0} | Prize: ৳${exam.prize || 0}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-sm" onclick="editExam('${id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline" onclick="viewAttendees('${id}')">
+                                <i class="fas fa-users"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteExam('${id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // ==================== ADMIN POST FUNCTIONS ====================
+        async function admAddPost() {
+            const title = document.getElementById('admPostTitle').value.trim();
+            const content = document.getElementById('admPostContent').value.trim();
+            const translation = document.getElementById('admPostTranslation').value.trim();
+            const link = document.getElementById('admPostLink').value.trim();
+            const linkTxt = document.getElementById('admPostLinkTxt').value.trim();
+            const fileInput = document.getElementById('admPostImg');
+            
+            if (!title) {
+                alert("পোস্টের টাইটেল দিতে হবে!");
+                return;
+            }
+
+            const btn = document.getElementById('btnPost');
+            const oldText = btn.innerText;
+            btn.innerText = "পোস্ট হচ্ছে...";
+            btn.disabled = true;
+
+            try {
+                let imgUrl = "";
+
+                if (fileInput.files.length > 0) {
+                    btn.innerText = "ছবি আপলোড হচ্ছে...";
+                    imgUrl = await uploadImg(fileInput.files[0]);
+                    if (!imgUrl) throw new Error("ছবি আপলোড ব্যর্থ হয়েছে");
+                }
+
+                const postData = {
+                    t: title,
+                    c: content,
+                    bnTranslation: translation,
+                    img: imgUrl,
+                    link: link,
+                    linkTxt: linkTxt,
+                    timestamp: Date.now()
+                };
+
+                await db.ref('posts').push(postData);
+                
+                alert("✅ পোস্ট সফলভাবে করা হয়েছে!");
+                
+                document.getElementById('admPostTitle').value = '';
+                document.getElementById('admPostContent').value = '';
+                document.getElementById('admPostTranslation').value = '';
+                document.getElementById('admPostLink').value = '';
+                document.getElementById('admPostLinkTxt').value = '';
+                document.getElementById('admPostImg').value = '';
+
+                renderApp();
+                renderAllPosts();
+
+            } catch (error) {
+                console.error("Post Error:", error);
+                alert("❌ পোস্ট করা যায়নি: " + error.message);
+            } finally {
+                btn.innerText = oldText;
+                btn.disabled = false;
+            }
+        }
+
+        async function admAddLib() {
+            const title = document.getElementById('libTitle').value.trim();
+            const link = document.getElementById('libLink').value.trim();
+            const type = document.getElementById('libType').value;
+            
+            if (!title || !link) return alert("Info missing");
+            
+            await db.ref('library').push({
+                title: title,
+                link: link,
+                type: type,
+                added: Date.now()
+            });
+            
+            alert("Library item added");
+            renderApp();
+        }
+
+        // ==================== NOTICE & SETTINGS FUNCTIONS ====================
+        // নোটিশ ও পেমেন্ট সেটিংস ট্যাব ম্যানেজমেন্ট
+        function admSettingsTab(tabName) {
+            // সব সেটিংস সেকশন লুকিয়ে রাখুন
+            document.querySelectorAll('.settings-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // নির্বাচিত ট্যাব দেখান
+            document.getElementById(`adm-${tabName}-settings`).classList.remove('hidden');
+            
+            // ট্যাব লোড হলে ডেটা আপডেট করুন
+            if (tabName === 'notice') {
+                loadNoticeSettings();
+            } else if (tabName === 'payment') {
+                loadPaymentSettings();
+            }
+        }
+
+        // নোটিশ সেটিংস লোড করুন
+        function loadNoticeSettings() {
+            if (!DB_DATA) return;
+            
+            // বর্তমান নোটিশ দেখান
+            const currentNotice = DB_DATA.notice || 'কোন নোটিশ নেই';
+            document.getElementById('currentNoticeDisplay').innerText = currentNotice;
+            document.getElementById('setNotice').value = currentNotice;
+            
+            // নোটিশ হিস্ট্রি লোড করুন
+            loadNoticeHistory();
+        }
+
+        // পেমেন্ট সেটিংস লোড করুন
+        function loadPaymentSettings() {
+            if (!DB_DATA || !DB_DATA.config) return;
+            
+            const config = DB_DATA.config;
+            document.getElementById('setBkash').value = config.bkash || '';
+            document.getElementById('setNagad').value = config.nagad || '';
+            document.getElementById('setMinDep').value = config.minDep || 50;
+            document.getElementById('setMinWd').value = config.minWd || 100;
+        }
+
+        // নোটিশ হিস্ট্রি লোড করুন
+        async function loadNoticeHistory() {
+            try {
+                const historySnap = await db.ref('noticeHistory').once('value');
+                const history = historySnap.val();
+                const container = document.getElementById('noticeHistoryList');
+                
+                if (!history || Object.keys(history).length === 0) {
+                    container.innerHTML = '<div class="card text-center p-4"><p class="text-light">কোনো পূর্বের নোটিশ নেই</p></div>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                // সর্বশেষ ৫টি নোটিশ সাজিয়ে দেখান
+                Object.entries(history)
+                    .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0))
+                    .slice(0, 5)
+                    .forEach(([id, noticeItem]) => {
+                        const date = new Date(noticeItem.timestamp).toLocaleDateString('bn-BD', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        container.innerHTML += `
+                            <div class="notice-history-item">
+                                <div class="flex flex-between">
+                                    <div style="flex: 1;">
+                                        <div class="text-sm">${noticeItem.text.substring(0, 100)}${noticeItem.text.length > 100 ? '...' : ''}</div>
+                                        <div class="notice-date mt-1">${date} | By: ${noticeItem.by || 'Admin'}</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline" onclick="restoreNotice('${id}')">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+            } catch (error) {
+                console.error("Notice history load error:", error);
+            }
+        }
+
+        // নোটিশ সেভ করুন
+        async function admSaveNotice() {
+            const newNotice = document.getElementById('setNotice').value.trim();
+            
+            if (!newNotice) {
+                alert("নোটিশ খালি রাখা যাবে না!");
+                return;
+            }
+            
+            const btn = document.querySelector('#adm-notice-settings button');
+            const oldText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সেভ হচ্ছে...';
+            btn.disabled = true;
+            
+            try {
+                // বর্তমান নোটিশ হিস্ট্রিতে সেভ করুন
+                const historyItem = {
+                    text: DB_DATA.notice || '',
+                    timestamp: Date.now(),
+                    by: CURR_USER?.name || 'Admin'
+                };
+                
+                await db.ref('noticeHistory').push(historyItem);
+                
+                // নতুন নোটিশ সেভ করুন
+                await db.ref('notice').set(newNotice);
+                
+                // লোকাল ডাটা আপডেট করুন
+                DB_DATA.notice = newNotice;
+                
+                // মার্কুই আপডেট করুন
+                document.getElementById('marqueeText').innerText = newNotice;
+                document.getElementById('currentNoticeDisplay').innerText = newNotice;
+                
+                alert("✅ নোটিশ সফলভাবে সেভ হয়েছে!");
+                
+                // হিস্ট্রি রিফ্রেশ করুন
+                loadNoticeHistory();
+                
+            } catch (error) {
+                console.error("Notice save error:", error);
+                alert("❌ নোটিশ সেভ হয়নি: " + error.message);
+            } finally {
+                btn.innerText = oldText;
+                btn.disabled = false;
+            }
+        }
+
+        // পুরনো নোটিশ রিস্টোর করুন
+        async function restoreNotice(historyId) {
+            try {
+                const historySnap = await db.ref('noticeHistory/' + historyId).once('value');
+                const oldNotice = historySnap.val();
+                
+                if (!oldNotice) {
+                    alert("নোটিশ খুঁজে পাওয়া যায়নি");
+                    return;
+                }
+                
+                if (confirm(`আপনি কি এই নোটিশটি রিস্টোর করতে চান?\n\n"${oldNotice.text.substring(0, 100)}..."`)) {
+                    document.getElementById('setNotice').value = oldNotice.text;
+                    alert("নোটিশটি এডিট বক্সে লোড হয়েছে। সেভ বাটনে ক্লিক করে সেভ করুন।");
+                }
+                
+            } catch (error) {
+                console.error("Restore notice error:", error);
+                alert("রিস্টোর করা যায়নি: " + error.message);
+            }
+        }
+
+        // পেমেন্ট সেটিংস সেভ করুন
+        async function admSavePaymentSettings() {
+            const bkash = document.getElementById('setBkash').value.trim();
+            const nagad = document.getElementById('setNagad').value.trim();
+            const minDep = parseInt(document.getElementById('setMinDep').value) || 50;
+            const minWd = parseInt(document.getElementById('setMinWd').value) || 100;
+            
+            if (!bkash || !nagad) {
+                alert("bKash এবং Nagad নম্বর দিতে হবে!");
+                return;
+            }
+            
+            const btn = document.querySelector('#adm-payment-settings button');
+            const oldText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সেভ হচ্ছে...';
+            btn.disabled = true;
+            
+            try {
+                await db.ref('config').update({
+                    bkash: bkash,
+                    nagad: nagad,
+                    minDep: minDep,
+                    minWd: minWd,
+                    lastUpdated: Date.now()
+                });
+                
+                // লোকাল ডাটা আপডেট করুন
+                if (DB_DATA && DB_DATA.config) {
+                    DB_DATA.config.bkash = bkash;
+                    DB_DATA.config.nagad = nagad;
+                    DB_DATA.config.minDep = minDep;
+                    DB_DATA.config.minWd = minWd;
+                }
+                
+                alert("✅ পেমেন্ট সেটিংস সফলভাবে সেভ হয়েছে!");
+                
+            } catch (error) {
+                console.error("Payment settings save error:", error);
+                alert("❌ সেভ হয়নি: " + error.message);
+            } finally {
+                btn.innerText = oldText;
+                btn.disabled = false;
+            }
+        }
+
+        // ==================== WALLET FUNCTIONS ====================
+        async function reqDep() {
+            const amt = parseFloat(document.getElementById('depAmt').value);
+            const method = document.getElementById('depMethod').value;
+            const trx = document.getElementById('depTrx').value.trim();
+            
+            if (!amt || amt <= 0) return alert("টাকার পরিমাণ দিন");
+            if (!trx) return alert("Transaction ID দিন");
+            
+            const config = DB_DATA?.config || {};
+            if (config.minDep && amt < config.minDep) {
+                return alert(`সর্বনিম্ন ডিপোজিট: ৳${config.minDep}`);
+            }
+            
+            await db.ref('txs').push({
+                uid: CURR_USER.id,
+                type: 'Deposit',
+                amount: amt,
+                method: method,
+                trx: trx,
+                status: 'Pending',
+                timestamp: Date.now()
+            });
+            
+            alert("ডিপোজিট রিকোয়েস্ট পাঠানো হয়েছে!");
+            closeModal();
+            renderApp();
+        }
+
+        async function reqWd() {
+            const amt = parseFloat(document.getElementById('wdAmt').value);
+            const method = document.getElementById('wdMethod').value;
+            const num = document.getElementById('wdNum').value.trim();
+            
+            if (!amt || amt <= 0) return alert("টাকার পরিমাণ দিন");
+            if (!num) return alert("মোবাইল নম্বর দিন");
+            
+            if (CURR_USER.bal < amt) return alert("পর্যাপ্ত ব্যালেন্স নেই");
+            
+            const config = DB_DATA?.config || {};
+            if (config.minWd && amt < config.minWd) {
+                return alert(`সর্বনিম্ন উত্তোলন: ৳${config.minWd}`);
+            }
+            
+            await db.ref('txs').push({
+                uid: CURR_USER.id,
+                type: 'Withdraw',
+                amount: amt,
+                method: method,
+                trx: num,
+                status: 'Pending',
+                timestamp: Date.now()
+            });
+            
+            alert("উত্তোলন রিকোয়েস্ট পাঠানো হয়েছে!");
+            closeModal();
+            renderApp();
+        }
+
+        async function admTx(txId, approve) {
+            const txRef = db.ref('txs/' + txId);
+            const txSnap = await txRef.once('value');
+            const tx = txSnap.val();
+            
+            if (!tx) return;
+            
+            const newStatus = approve ? 'Approved' : 'Rejected';
+            await txRef.update({ status: newStatus });
+            
+            if (approve) {
+                const userRef = db.ref('users/' + tx.uid + '/bal');
+                const userSnap = await userRef.once('value');
+                const currentBal = userSnap.val() || 0;
+                
+                if (tx.type === 'Deposit') {
+                    await userRef.set(currentBal + tx.amount);
+                } else if (tx.type === 'Withdraw') {
+                    await userRef.set(currentBal - tx.amount);
+                }
+                
+                if (CURR_USER.id === tx.uid) {
+                    CURR_USER.bal = currentBal + (tx.type === 'Deposit' ? tx.amount : -tx.amount);
+                }
+            }
+            
+            alert(`Transaction ${newStatus}`);
+            renderApp();
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        async function uploadImg(file) {
+            if (!file) return '';
+            
+            const formData = new FormData();
+            formData.append("image", file);
+            
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+                    method: "POST",
+                    body: formData
+                });
+                
+                const data = await response.json();
+                return data.data.url;
+            } catch (error) {
+                console.error('Upload error:', error);
+                return '';
+            }
+        }
+
+        function nav(v, el) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            document.getElementById('view-' + v).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            if (el) {
+                el.classList.add('active');
+                document.getElementById('headerTitle').innerText = el.querySelector('i').nextSibling.textContent.trim();
+            }
+        }
+
+        function admTab(t) {
+            document.querySelectorAll('.adm-sec').forEach(sec => {
+                sec.classList.add('hidden');
+            });
+            document.getElementById('adm-' + t).classList.remove('hidden');
+            
+            // Load specific data when tab changes
+            if (t === 'post') {
+                renderAllPosts();
+            } else if (t === 'set') {
+                // সেটিংস ট্যাব খুললে নোটিশ ট্যাব ডিফল্ট হিসেবে দেখান
+                setTimeout(() => {
+                    admSettingsTab('notice');
+                }, 100);
+            }
+        }
+
+        function showModal(id) {
+            document.getElementById('modal-' + id).classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.add('hidden');
+            });
+            
+            if (TIMER_INT) {
+                clearInterval(TIMER_INT);
+                TIMER_INT = null;
+            }
+            
+            ACTIVE_EXAM = null;
+        }
+
+        function copy(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+            });
+        }
+
+        function searchStudents(query) {
+            const filter = query.toUpperCase();
+            const cards = document.getElementsByClassName('student-card');
+            for (let i = 0; i < cards.length; i++) {
+                const txt = cards[i].innerText;
+                if (txt.toUpperCase().indexOf(filter) > -1) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+
+        function logoutConfirm() {
+            if (confirm('আপনি কি নিশ্চিত যে লগআউট করতে চান?')) {
+                logout();
+            }
+        }
+
+        function logout() {
+            CURR_USER = null;
+            localStorage.removeItem('mrds_user');
+            localStorage.removeItem('mrds_pass');
+            location.reload();
+        }
+
+        // ==================== EXAM FUNCTIONS ====================
+        async function startExam(examId) {
+            const examSnap = await db.ref('exams/' + examId).once('value');
+            const exam = examSnap.val();
+            
+            if (!exam) {
+                alert('Exam not found');
+                return;
+            }
+            
+            const userClass = CURR_USER.class || 'Class 10';
+            
+            if (exam.class !== 'All' && exam.class !== userClass) {
+                alert(`এই এক্সাম শুধুমাত্র ${exam.class} শ্রেণীর শিক্ষার্থীদের জন্য। আপনার শ্রেণী: ${userClass}`);
+                return;
+            }
+            
+            if (exam.mode === 'Google') {
+                window.open(exam.link, '_blank');
+                return;
+            }
+            
+            const resultsSnap = await db.ref('results').once('value');
+            const results = resultsSnap.val();
+            
+            const alreadyTaken = results && Object.values(results).some(r => 
+                r.eid === examId && r.uid === CURR_USER.id
+            );
+            
+            if (alreadyTaken) {
+                return alert('আপনি ইতিমধ্যে এই এক্সাম দিয়েছেন');
+            }
+            
+            if (exam.fee > 0) {
+                if (CURR_USER.bal < exam.fee) {
+                    return alert('অপর্যাপ্ত ব্যালেন্স');
+                }
+                if (!confirm(`এক্সাম ফি ৳${exam.fee} আপনার অ্যাকাউন্ট থেকে কাটা হবে। অব্যাহত রাখতে চান?`)) {
+                    return;
+                }
+                
+                const newBal = CURR_USER.bal - exam.fee;
+                await db.ref('users/' + CURR_USER.id + '/bal').set(newBal);
+                CURR_USER.bal = newBal;
+                
+                await db.ref('txs').push({
+                    uid: CURR_USER.id,
+                    type: 'Exam Fee',
+                    amount: exam.fee,
+                    method: 'System',
+                    trx: 'EXAM-' + examId,
+                    status: 'Approved',
+                    timestamp: Date.now()
+                });
+            }
+            
+            ACTIVE_EXAM = { id: examId, ...exam };
+            startExamUI();
+        }
+
+        function startExamUI() {
+            document.getElementById('runExamTitle').innerText = ACTIVE_EXAM.title;
+            const examBody = document.getElementById('examBody');
+            examBody.innerHTML = '';
+            
+            if (ACTIVE_EXAM.questions && ACTIVE_EXAM.questions.length > 0) {
+                ACTIVE_EXAM.questions.forEach((q, i) => {
+                    let qContent = '';
+                    
+                    if (q.type === 'image') {
+                        qContent = `<div class="mb-2"><b>প্রশ্ন ${i + 1}:</b></div><img src="${q.val}" class="q-img" style="max-width:100%; border-radius:8px;">`;
+                    } else if (q.type === 'html') {
+                        qContent = `<div class="mb-2"><b>প্রশ্ন ${i + 1}:</b> <span class="math-content">${q.val}</span></div>`;
+                    } else {
+                        qContent = `<div class="mb-2"><b>প্রশ্ন ${i + 1}:</b> ${q.val}</div>`;
+                    }
+                    
+                    let optionsHTML = '';
+                    if (q.opts) {
+                        ['A', 'B', 'C', 'D'].forEach((letter, oi) => {
+                            if (q.opts[oi]) {
+                                optionsHTML += `
+                                    <label class="mcq-opt">
+                                        <input type="radio" name="q${i}" value="${oi}">
+                                        <div class="math-content"><b>${letter}.</b> ${q.opts[oi]}</div>
+                                    </label>
+                                `;
+                            }
+                        });
+                    }
+                    
+                    examBody.innerHTML += `
+                        <div class="card" id="q-${i}">
+                            ${qContent}
+                            <div class="mt-2">${optionsHTML}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                examBody.innerHTML = '<p class="text-center">No questions available</p>';
+            }
+            
+            document.getElementById('modal-exam').classList.remove('hidden');
+            
+            let timeLeft = (ACTIVE_EXAM.dur || 60) * 60;
+            updateTimerDisplay(timeLeft);
+            if (TIMER_INT) clearInterval(TIMER_INT);
+            TIMER_INT = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(TIMER_INT);
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        async function submitExam() {
+            clearInterval(TIMER_INT);
+            
+            if (!ACTIVE_EXAM) return;
+            
+            let score = 0;
+            const total = ACTIVE_EXAM.questions ? ACTIVE_EXAM.questions.length : 0;
+            
+            if (total > 0) {
+                ACTIVE_EXAM.questions.forEach((q, i) => {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if (selected && parseInt(selected.value) === parseInt(q.ans)) {
+                        score++;
+                    }
+                });
+            }
+            
+            const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+            
+            await db.ref('results').push({
+                uid: CURR_USER.id,
+                eid: ACTIVE_EXAM.id,
+                score: score,
+                total: total,
+                percentage: percentage,
+                timestamp: Date.now()
+            });
+            
+            if (ACTIVE_EXAM.giftAmount > 0) {
+                const newBalance = CURR_USER.bal + ACTIVE_EXAM.giftAmount;
+                await db.ref('users/' + CURR_USER.id + '/bal').set(newBalance);
+                CURR_USER.bal = newBalance;
+                
+                await db.ref('gifts').push({
+                    uid: CURR_USER.id,
+                    eid: ACTIVE_EXAM.id,
+                    amount: ACTIVE_EXAM.giftAmount,
+                    reason: 'Auto gift for exam participation',
+                    timestamp: Date.now()
+                });
+            }
+            
+            alert(`Exam submitted! Score: ${score}/${total} (${percentage}%)\n\nPrize money: ৳${ACTIVE_EXAM.giftAmount || 0} added to your account.`);
+            closeModal();
+            ACTIVE_EXAM = null;
+            updateUserUI();
+        }
+    </script>
+</body>
+</html>
