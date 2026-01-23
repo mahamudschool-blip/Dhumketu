@@ -1209,36 +1209,6 @@
                 console.error("❌ Render error:", error);
             }
         }
-async function updateProfile() {
-    const fileInput = document.getElementById('editPicFile');
-    const newName = document.getElementById('editName').value;
-    const newPass = document.getElementById('editPass').value;
-    const btn = document.getElementById('btnUpdateProfile');
-    
-    btn.disabled = true;
-    btn.innerText = "Updating...";
-
-    let avatarUrl = CURR_USER.avatar || "";
-
-    // ছবি সিলেক্ট করা থাকলে আপলোড হবে
-    if (fileInput.files[0]) {
-        const formData = new FormData();
-        formData.append('image', fileInput.files[0]);
-        
-        try {
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
-            if (data.success) {
-                avatarUrl = data.data.url;
-            }
-        } catch (err) {
-            console.error("Upload failed", err);
-            alert("Image upload failed!");
-        }
-    }
 
     // ডাটাবেজ আপডেট
     const updates = {};
@@ -2584,6 +2554,59 @@ async function updateProfile() {
             ACTIVE_EXAM = null;
             updateUserUI();
         }
+        // ImgBB API Key
+const IMGBB_KEY = '0b3aac4a39451019389e62654a4016c3';
+
+async function updateProfile() {
+    const fileInput = document.getElementById('editPicFile');
+    const newName = document.getElementById('editName').value;
+    const newPass = document.getElementById('editPass').value;
+    const btn = document.getElementById('btnUpdateProfile');
+    
+    btn.disabled = true;
+    btn.innerText = "Updating...";
+
+    let avatarUrl = CURR_USER.avatar || "";
+
+    // ছবি সিলেক্ট করা থাকলে ImgBB-তে আপলোড হবে
+    if (fileInput.files[0]) {
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+        
+        try {
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                avatarUrl = data.data.url;
+            } else {
+                alert("ইমেজ আপলোড ব্যর্থ হয়েছে!");
+            }
+        } catch (err) {
+            console.error("Upload error:", err);
+            alert("নেটওয়ার্ক সমস্যার কারণে ইমেজ আপলোড হয়নি!");
+        }
+    }
+
+    // Firebase ডাটাবেজ আপডেট
+    const updates = {};
+    if (newName) updates.name = newName;
+    if (newPass) updates.pass = newPass;
+    updates.avatar = avatarUrl;
+
+    try {
+        await db.ref('users/' + CURR_USER.id).update(updates);
+        alert("প্রোফাইল সফলভাবে আপডেট হয়েছে!");
+        location.reload(); 
+    } catch (err) {
+        alert("আপডেট করতে সমস্যা হয়েছে: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Save Changes";
+    }
+}
     </script>
 </body>
 </html>
