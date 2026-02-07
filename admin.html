@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhumketu Admin | Master Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background: #0f172a; color: #f1f5f9; }
+        .input-box { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 12px; width: 100%; color: white; margin-bottom: 1rem; outline: none; }
+        .input-box:focus { border-color: #3b82f6; }
+        .section { display: none; }
+        .section.active { display: block; }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-12">
+            <h1 class="text-3xl font-black text-blue-500 italic">DHUMKETU ADMIN</h1>
+            <div class="flex gap-4">
+                <button onclick="showSec('setup')" class="bg-slate-800 px-6 py-2 rounded-xl text-sm font-bold">১. কার্ড তৈরি</button>
+                <button onclick="showSec('mcq')" class="bg-blue-600 px-6 py-2 rounded-xl text-sm font-bold">২. প্রশ্ন আপলোড</button>
+            </div>
+        </header>
+
+        <section id="setup" class="section active">
+            <h2 class="text-xl font-bold mb-6 text-yellow-400">নতুন চ্যাপ্টার কার্ড তৈরি করুন</h2>
+            <div class="bg-slate-800 p-8 rounded-[2rem] border border-slate-700">
+                <select id="f_class" class="input-box">
+                    <option value="Class 9">Class 9</option>
+                    <option value="Class 10">Class 10</option>
+                    <option value="HSC">HSC</option>
+                </select>
+                <input id="f_subject" type="text" placeholder="Subject Name (e.g. Physics)" class="input-box">
+                <input id="f_chapter" type="text" placeholder="Chapter Name" class="input-box">
+                <textarea id="f_details" placeholder="Chapter Details" class="input-box"></textarea>
+                <button onclick="createCard()" class="w-full bg-blue-600 p-4 rounded-xl font-black mt-4">CREATE CHAPTER CARD</button>
+            </div>
+        </section>
+
+        <section id="mcq" class="section">
+            <h2 class="text-xl font-bold mb-6 text-purple-400 italic">ম্যাজিক MCQ আপলোডার (JSON Support)</h2>
+            <div class="bg-slate-800 p-8 rounded-[2rem] border border-slate-700">
+                <select id="targetPath" class="input-box"><option>Select Chapter Card...</option></select>
+                <textarea id="json-input" rows="6" placeholder="Paste Gemini JSON here..." class="input-box font-mono text-xs"></textarea>
+                <button onclick="processJSON()" class="w-full bg-purple-600 p-4 rounded-xl font-black mb-6">IMPORT QUESTIONS</button>
+                
+                <div id="q-list" class="space-y-4"></div>
+                <button onclick="saveAll()" class="w-full bg-green-600 p-4 rounded-xl font-black mt-10">SAVE ALL TO DATABASE</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBrmy4wHPsvObbdl6ZEVOOJ1JvLK1xs-hw", databaseURL: "https://dhumketu2-fa6f0-default-rtdb.firebaseio.com", projectId: "dhumketu2-fa6f0" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function showSec(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'mcq') fetchPaths();
+        }
+
+        function createCard() {
+            const cls = document.getElementById('f_class').value;
+            const sub = document.getElementById('f_subject').value;
+            const chp = document.getElementById('f_chapter').value;
+            const det = document.getElementById('f_details').value;
+            if(!sub || !chp) return alert("Fill all!");
+
+            db.ref(`qbank/${cls}/${sub}/${chp}`).update({
+                _init: true,
+                subjectInfo: { className: cls, subjectName: sub, chapterName: chp, details: det, time: Date.now() }
+            }).then(() => { alert("Card Created!"); showSec('mcq'); });
+        }
+
+        function fetchPaths() {
+            const sel = document.getElementById('targetPath');
+            sel.innerHTML = '<option value="">-- Select Chapter --</option>';
+            db.ref('qbank').once('value', snapshot => {
+                const data = snapshot.val();
+                for(let cls in data) {
+                    for(let sub in data[cls]) {
+                        for(let chp in data[cls][sub]) {
+                            sel.innerHTML += `<option value="qbank/${cls}/${sub}/${chp}">${cls} > ${sub} > ${chp}</option>`;
+                        }
+                    }
+                }
+            });
+        }
+
+        function processJSON() {
+            const raw = document.getElementById('json-input').value;
+            try {
+                const mcqs = JSON.parse(raw.replace(/```json|```/g, "").trim());
+                mcqs.forEach(m => addRow(m.q, m.a, m.b, m.c, m.d, m.ans));
+                document.getElementById('json-input').value = "";
+            } catch(e) { alert("Invalid JSON!"); }
+        }
+
+        function addRow(q='', a='', b='', c='', d='', ans='A') {
+            const list = document.getElementById('q-list');
+            const div = document.createElement('div');
+            div.className = "p-4 bg-slate-900 rounded-xl border border-slate-700";
+            div.innerHTML = `
+                <input type="text" value="${q}" class="q-t input-box mb-2" placeholder="Question">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" value="${a}" class="q-a input-box text-xs" placeholder="A">
+                    <input type="text" value="${b}" class="q-b input-box text-xs" placeholder="B">
+                    <input type="text" value="${c}" class="q-c input-box text-xs" placeholder="C">
+                    <input type="text" value="${d}" class="q-d input-box text-xs" placeholder="D">
+                </div>
+                <select class="q-ans input-box mb-0"><option value="A" ${ans==='A'?'selected':''}>Ans: A</option><option value="B" ${ans==='B'?'selected':''}>Ans: B</option><option value="C" ${ans==='C'?'selected':''}>Ans: C</option><option value="D" ${ans==='D'?'selected':''}>Ans: D</option></select>
+            `;
+            list.appendChild(div);
+        }
+
+        async function saveAll() {
+            const path = document.getElementById('targetPath').value;
+            const rows = document.querySelectorAll('#q-list > div');
+            if(!path || rows.length === 0) return alert("Select path & add questions!");
+
+            for(let row of rows) {
+                const data = {
+                    title: row.querySelector('.q-t').value,
+                    options: { A: row.querySelector('.q-a').value, B: row.querySelector('.q-b').value, C: row.querySelector('.q-c').value, D: row.querySelector('.q-d').value },
+                    answer: row.querySelector('.q-ans').value,
+                    type: 'mcq', time: Date.now()
+                };
+                await db.ref(path).push(data);
+            }
+            alert("All Saved!"); location.reload();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhumketu Master Admin | Complete Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; scroll-behavior: smooth; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        .nav-btn-active { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border-radius: 14px; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
+        .select-custom { background: #1e293b; border: 2px solid #334155; padding: 14px; border-radius: 14px; width: 100%; outline: none; color: white; transition: 0.3s; }
+        .select-custom:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .input-custom { background: #0f172a; border: 2px solid #334155; padding: 14px; border-radius: 14px; width: 100%; outline: none; color: white; transition: 0.3s; }
+        .input-custom:focus { border-color: #8b5cf6; }
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-active { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
+        .q-block { animation: slideIn 0.3s ease-out; border-left: 4px solid #8b5cf6; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .class-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; margin: 2px; }
+        .drop-zone { border: 3px dashed #4b5563; border-radius: 16px; padding: 40px; text-align: center; transition: all 0.3s; }
+        .drop-zone.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .drop-zone.dragover { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-gray-900 text-slate-200">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-80 bg-gradient-to-b from-slate-800 to-slate-900 p-6 flex flex-col gap-3 border-r border-slate-700 shadow-2xl">
+            <div class="mb-8 px-4">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <span class="text-white font-black text-xl">D</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black text-blue-400 italic uppercase tracking-tighter">Dhumketu AI</h1>
+                        <p class="text-[10px] text-slate-400 font-bold tracking-widest">COMPLETE MANAGEMENT</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-4">Version 5.0 | JSON Support</p>
+            </div>
+            
+            <nav class="flex flex-col gap-2">
+                <button onclick="showSection('class-sec', this)" class="nav-btn nav-btn-active flex items-center gap-4 p-4 text-sm font-bold transition-all text-left hover:bg-slate-700/50 rounded-xl">
+                    <span class="text-xl">🏫</span>
+                    <div>
+                        <div class="text-green-300">শ্রেণী ম্যানেজমেন্ট</div>
+                        <div class="text-[10px] text-green-400">Class Setup</div>
+                    </div>
+                </button>
+                
+                <button onclick="showSection('subject-sec', this)" class="nav-btn flex items-center gap-4 p-4 text-sm font-bold transition-all text-left hover:bg-slate-700/50 rounded-xl">
+                    <span class="text-xl">📚</span>
+                    <div>
+                        <div>বিষয় ম্যানেজমেন্ট</div>
+                        <div class="text-[10px] text-slate-400">Subject & Chapter</div>
+                    </div>
+                </button>
+                
+                <button onclick="showSection('mcqset-sec', this)" class="nav-btn flex items-center gap-4 p-4 text-sm font-bold transition-all text-left hover:bg-slate-700/50 rounded-xl">
+                    <span class="text-xl">📝</span>
+                    <div>
+                        <div class="text-purple-300">MCQ সেট তৈরি</div>
+                        <div class="text-[10px] text-purple-400">25-30 Questions</div>
+                    </div>
+                </button>
+                
+                <button onclick="showSection('json-sec', this)" class="nav-btn flex items-center gap-4 p-4 text-sm font-bold transition-all text-left hover:bg-slate-700/50 rounded-xl">
+                    <span class="text-xl">📁</span>
+                    <div>
+                        <div class="text-amber-300">JSON আপলোড</div>
+                        <div class="text-[10px] text-amber-400">Bulk Upload</div>
+                    </div>
+                </button>
+                
+                <button onclick="showSection('magic-sec', this)" class="nav-btn flex items-center gap-4 p-4 text-sm font-bold transition-all text-left hover:bg-slate-700/50 rounded-xl">
+                    <span class="text-xl">✨</span>
+                    <div>
+                        <div class="text-indigo-300">ম্যাজিক স্ক্যানার</div>
+                        <div class="text-[10px] text-indigo-400">AI Scanner</div>
+                    </div>
+                </button>
+                
+                <button onclick="showSection('settings-sec', this)" class="nav-btn flex items-center gap-4 p-4 text-sm font-bold transition-all text-left hover:bg-slate-700/50 rounded-xl">
+                    <span class="text-xl">⚙️</span>
+                    <div>
+                        <div>সেটিংস</div>
+                        <div class="text-[10px] text-slate-400">System Settings</div>
+                    </div>
+                </button>
+            </nav>
+            
+            <div class="mt-auto pt-8 border-t border-slate-700">
+                <div class="text-xs text-slate-500">
+                    <div class="flex justify-between mb-2">
+                        <span>Classes:</span>
+                        <span id="class-count">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Storage:</span>
+                        <span id="storage-used">0%</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            <!-- Class Management Section -->
+            <section id="class-sec" class="admin-section active">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+                        <span class="text-2xl">🏫</span>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-black text-green-300">শ্রেণী ম্যানেজমেন্ট</h2>
+                        <p class="text-emerald-400">Create and manage educational classes</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Add New Class -->
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700">
+                        <h3 class="text-xl font-bold mb-6 text-blue-300">নতুন শ্রেণী তৈরি করুন</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-bold mb-3 text-slate-300">শ্রেণীর কোড *</label>
+                                <input id="class_code" type="text" class="input-custom" placeholder="যেমন: nine, ten, eleven">
+                                <p class="text-xs text-slate-500 mt-2">ইংরেজি ছোট হাতের অক্ষরে লিখুন</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-3 text-slate-300">শ্রেণীর নাম (বাংলা) *</label>
+                                <input id="class_name_bn" type="text" class="input-custom" placeholder="যেমন: নবম শ্রেণী">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-3 text-slate-300">শ্রেণীর নাম (ইংরেজি)</label>
+                                <input id="class_name_en" type="text" class="input-custom" placeholder="যেমন: Class Nine">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-3 text-slate-300">বর্ণনা</label>
+                                <textarea id="class_description" rows="3" class="input-custom" placeholder="শ্রেণীর সংক্ষিপ্ত বর্ণনা..."></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-bold mb-3 text-slate-300">প্রধান বিষয়</label>
+                                    <input id="class_main_subject" type="text" class="input-custom" placeholder="যেমন: বিজ্ঞান, মানবিক">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-bold mb-3 text-slate-300">ছাত্র সংখ্যা</label>
+                                    <input id="class_student_count" type="number" class="input-custom" placeholder="0" value="0">
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="class_active" class="w-5 h-5" checked>
+                                    <label for="class_active" class="text-sm">সক্রিয়</label>
+                                </div>
+                                
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="class_featured" class="w-5 h-5">
+                                    <label for="class_featured" class="text-sm">ফিচার্ড</label>
+                                </div>
+                            </div>
+                            
+                            <button onclick="addNewClass()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 p-4 rounded-xl font-bold hover:scale-[1.02] transition">
+                                ➕ শ্রেণী তৈরি করুন
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Manage Classes -->
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-purple-300">বিদ্যমান শ্রেণীসমূহ</h3>
+                            <span class="text-sm text-slate-400" id="total-classes">0 Classes</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div id="classes-list" class="space-y-3 max-h-[500px] overflow-y-auto p-2">
+                                <div class="text-center py-12 text-slate-500">
+                                    <div class="text-4xl mb-4">🏫</div>
+                                    <p>কোন শ্রেণী নেই</p>
+                                    <p class="text-sm text-slate-600 mt-2">প্রথম শ্রেণী তৈরি করুন</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Class Statistics -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700">
+                    <h3 class="text-xl font-bold mb-6 text-amber-300">শ্রেণী পরিসংখ্যান</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="p-4 bg-slate-900/50 rounded-xl">
+                            <div class="text-2xl font-black text-blue-400 mb-2" id="stat-class-count">0</div>
+                            <div class="text-sm font-medium text-slate-300">মোট শ্রেণী</div>
+                        </div>
+                        
+                        <div class="p-4 bg-slate-900/50 rounded-xl">
+                            <div class="text-2xl font-black text-green-400 mb-2" id="stat-active-classes">0</div>
+                            <div class="text-sm font-medium text-slate-300">সক্রিয় শ্রেণী</div>
+                        </div>
+                        
+                        <div class="p-4 bg-slate-900/50 rounded-xl">
+                            <div class="text-2xl font-black text-purple-400 mb-2" id="stat-subject-count">0</div>
+                            <div class="text-sm font-medium text-slate-300">বিষয়</div>
+                        </div>
+                        
+                        <div class="p-4 bg-slate-900/50 rounded-xl">
+                            <div class="text-2xl font-black text-yellow-400 mb-2" id="stat-mcq-count">0</div>
+                            <div class="text-sm font-medium text-slate-300">MCQ প্রশ্ন</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JSON Upload Section -->
+            <section id="json-sec" class="admin-section">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl">
+                        <span class="text-2xl">📁</span>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-black text-amber-300">JSON MCQ আপলোড</h2>
+                        <p class="text-yellow-400">Bulk upload MCQ questions from JSON files</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700 mb-8">
+                    <h3 class="text-xl font-bold mb-6 text-blue-300">JSON ফাইল আপলোড</h3>
+                    
+                    <!-- Upload Methods -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-blue-900/30 p-6 rounded-2xl border border-blue-500/30">
+                            <div class="text-3xl mb-3">📁</div>
+                            <h4 class="font-bold mb-2 text-blue-300">ফাইল আপলোড</h4>
+                            <p class="text-sm text-blue-400 mb-4">JSON ফাইল সিলেক্ট করুন</p>
+                            <input type="file" id="json-file-input" accept=".json,application/json" class="w-full text-sm text-slate-400 file:bg-blue-600 file:border-0 file:px-4 file:py-2 file:rounded-xl file:text-white">
+                        </div>
+                        
+                        <div class="bg-purple-900/30 p-6 rounded-2xl border border-purple-500/30">
+                            <div class="text-3xl mb-3">📋</div>
+                            <h4 class="font-bold mb-2 text-purple-300">টেক্সট পেস্ট</h4>
+                            <p class="text-sm text-purple-400 mb-4">JSON টেক্সট পেস্ট করুন</p>
+                            <button onclick="showJsonPaste()" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 rounded-xl font-bold text-sm">
+                                JSON পেস্ট করুন
+                            </button>
+                        </div>
+                        
+                        <div class="bg-green-900/30 p-6 rounded-2xl border border-green-500/30">
+                            <div class="text-3xl mb-3">📖</div>
+                            <h4 class="font-bold mb-2 text-green-300">টেমপ্লেট</h4>
+                            <p class="text-sm text-green-400 mb-4">JSON ফরম্যাট দেখুন</p>
+                            <button onclick="showJsonTemplate()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 rounded-xl font-bold text-sm">
+                                টেমপ্লেট দেখুন
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Drop Zone -->
+                    <div id="json-drop-zone" class="drop-zone mb-8">
+                        <div class="text-5xl mb-4">📁</div>
+                        <h4 class="text-xl font-bold mb-2 text-slate-300">JSON ফাইল ড্রপ করুন</h4>
+                        <p class="text-slate-400 mb-4">বা ক্লিক করে সিলেক্ট করুন</p>
+                        <input type="file" id="json-drop-input" accept=".json,application/json" class="hidden">
+                        <button onclick="document.getElementById('json-drop-input').click()" class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 rounded-xl font-bold">
+                            ফাইল সিলেক্ট করুন
+                        </button>
+                        <p class="text-xs text-slate-500 mt-4">সমর্থিত ফরম্যাট: JSON</p>
+                    </div>
+                    
+                    <!-- Upload Progress -->
+                    <div id="upload-progress" class="hidden">
+                        <div class="flex justify-between text-sm text-slate-400 mb-2">
+                            <span>আপলোড প্রগ্রেস</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                        <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
+                            <div id="progress-bar" class="h-full bg-gradient-to-r from-green-500 to-emerald-500" style="width: 0%"></div>
+                        </div>
+                        <div id="progress-details" class="text-sm text-slate-400 mt-2">
+                            প্রসেসিং...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- JSON Parser Settings -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700 mb-8">
+                    <h3 class="text-xl font-bold mb-6 text-purple-300">JSON পার্সার সেটিংস</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-bold mb-3 text-slate-300">টার্গেট শ্রেণী *</label>
+                            <select id="json_class" class="select-custom" onchange="updateJsonSubjectList()">
+                                <option value="">শ্রেণী নির্বাচন করুন</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-3 text-slate-300">টার্গেট বিষয় *</label>
+                            <select id="json_subject" class="select-custom">
+                                <option value="">প্রথম শ্রেণী নির্বাচন করুন</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-3 text-slate-300">অধ্যায়</label>
+                            <input id="json_chapter" type="text" class="input-custom" placeholder="অধ্যায়ের নাম">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-3 text-slate-300">কঠিনতা</label>
+                            <select id="json_difficulty" class="select-custom">
+                                <option value="medium">Medium</option>
+                                <option value="easy">Easy</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-3 text-slate-300">সংরক্ষণ ফোল্ডার</label>
+                        <select id="json_folder" class="select-custom">
+                            <option value="">ফোল্ডার লোড হচ্ছে...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="json_create_set" class="w-5 h-5" checked>
+                            <label for="json_create_set" class="text-sm">MCQ সেট হিসেবে সংরক্ষণ করুন</label>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="json_overwrite" class="w-5 h-5">
+                            <label for="json_overwrite" class="text-sm">বিদ্যমান ডাটা ওভাররাইট করুন</label>
+                        </div>
+                    </div>
+                    
+                    <button onclick="processJsonUpload()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 p-4 rounded-xl font-bold text-lg hover:scale-[1.02] transition">
+                        🚀 JSON প্রসেস করুন
+                    </button>
+                </div>
+                
+                <!-- JSON Template Modal -->
+                <div id="json-template-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                    <div class="bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-amber-300">JSON ফরম্যাট টেমপ্লেট</h3>
+                            <button onclick="hideJsonTemplate()" class="text-2xl text-slate-400 hover:text-white">&times;</button>
+                        </div>
+                        <div class="p-6 overflow-y-auto max-h-[70vh]">
+                            <pre class="bg-slate-900 p-6 rounded-xl text-sm overflow-x-auto text-slate-300">
+{
+  "setInfo": {
+    "title": "পদার্থবিজ্ঞান ১ম অধ্যায় MCQ সেট",
+    "description": "বল সম্পর্কিত প্রশ্ন",
+    "class": "nine",
+    "subject": "physics",
+    "chapter": "বল",
+    "difficulty": "medium"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "title": "নিউটনের প্রথম গতিসূত্র কোনটি?",
+      "description": "জড়তার সূত্র সম্পর্কিত প্রশ্ন",
+      "options": {
+        "A": "বলের সমানুপাতিক",
+        "B": "ভরবেগের সংরক্ষণ",
+        "C": "জড়তা",
+        "D": "ক্রিয়া-প্রতিক্রিয়া"
+      },
+      "answer": "C",
+      "explanation": "নিউটনের প্রথম গতিসূত্র জড়তার সূত্র নামে পরিচিত",
+      "difficulty": "easy",
+      "marks": 1
+    },
+    {
+      "id": 2,
+      "title": "ভরবেগের সংরক্ষণ সূত্র কার?",
+      "description": "ভরবেগ সম্পর্কিত প্রশ্ন",
+      "options": {
+        "A": "নিউটন",
+        "B": "আইনস্টাইন",
+        "C": "গ্যালিলিও",
+        "D": "কেপলার"
+      },
+      "answer": "A",
+      "explanation": "ভরবেগের সংরক্ষণ সূত্র নিউটনের",
+      "difficulty": "medium",
+      "marks": 1
+    }
+  ]
+}
+
+<b>অথবা</b>
+
+{
+  "singleMCQs": [
+    {
+      "title": "প্রশ্নের টেক্সট",
+      "description": "প্রশ্নের বর্ণনা",
+      "class": "ten",
+      "subject": "math",
+      "chapter": "বীজগণিত",
+      "difficulty": "easy",
+      "options": {
+        "A": "প্রথম অপশন",
+        "B": "দ্বিতীয় অপশন",
+        "C": "তৃতীয় অপশন",
+        "D": "চতুর্থ অপশন"
+      },
+      "answer": "A",
+      "explanation": "সঠিক উত্তরের ব্যাখ্যা"
+    }
+  ]
+}
+                            </pre>
+                            <div class="mt-6 p-4 bg-amber-900/30 rounded-xl border border-amber-500/30">
+                                <h4 class="font-bold text-amber-300 mb-2">টেমপ্লেট ডাউনলোড করুন</h4>
+                                <button onclick="downloadJsonTemplate()" class="bg-gradient-to-r from-amber-600 to-yellow-600 px-6 py-2 rounded-xl font-bold">
+                                    📥 টেমপ্লেট ডাউনলোড
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- JSON Paste Modal -->
+                <div id="json-paste-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                    <div class="bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-purple-300">JSON টেক্সট পেস্ট করুন</h3>
+                            <button onclick="hideJsonPaste()" class="text-2xl text-slate-400 hover:text-white">&times;</button>
+                        </div>
+                        <div class="p-6">
+                            <textarea id="json-paste-area" rows="15" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-mono text-slate-300" placeholder="JSON টেক্সট এখানে পেস্ট করুন..."></textarea>
+                            <div class="flex gap-4 mt-6">
+                                <button onclick="processPastedJson()" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-xl font-bold">
+                                    প্রসেস করুন
+                                </button>
+                                <button onclick="hideJsonPaste()" class="flex-1 bg-gradient-to-r from-slate-700 to-slate-800 p-4 rounded-xl font-bold border border-slate-600">
+                                    বাতিল করুন
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ============ FIREBASE CONFIG ============
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrmy4wHPsvObbdl6ZEVOOJ1JvLK1xs-hw",
+            databaseURL: "https://dhumketu2-fa6f0-default-rtdb.firebaseio.com",
+            projectId: "dhumketu2-fa6f0"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // ============ GLOBAL VARIABLES ============
+        let classesList = [];
+        let currentJsonData = null;
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial data
+            loadClasses();
+            loadFolders();
+            setupDropZone();
+            
+            // Set current time
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('last-update-time').textContent = 
+                    now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+            }, 60000);
+        });
+
+        // ============ NAVIGATION ============
+        function showSection(id, btn) {
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-btn-active'));
+            
+            // Show selected section
+            document.getElementById(id).classList.add('active');
+            if(btn) btn.classList.add('nav-btn-active');
+            
+            // Load data for specific sections
+            if(id === 'class-sec') {
+                loadClasses();
+                loadClassStats();
+            } else if(id === 'json-sec') {
+                loadClasses();
+                loadFolders();
+            }
+        }
+
+        // ============ CLASS MANAGEMENT ============
+        function loadClasses() {
+            const classesDiv = document.getElementById('classes-list');
+            classesDiv.innerHTML = '<div class="text-center py-8 text-slate-500">লোড হচ্ছে...</div>';
+            
+            db.ref('classes').once('value', snapshot => {
+                const data = snapshot.val();
+                classesList = [];
+                
+                if(data) {
+                    Object.keys(data).forEach(key => {
+                        classesList.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                    
+                    // Sort by creation time
+                    classesList.sort((a, b) => b.createdAt - a.createdAt);
+                }
+                
+                displayClasses();
+                updateClassDropdowns();
+                loadClassStats();
+            });
+        }
+
+        function displayClasses() {
+            const classesDiv = document.getElementById('classes-list');
+            const totalClasses = document.getElementById('total-classes');
+            
+            if(classesList.length === 0) {
+                classesDiv.innerHTML = `
+                    <div class="text-center py-12 text-slate-500">
+                        <div class="text-4xl mb-4">🏫</div>
+                        <p>কোন শ্রেণী নেই</p>
+                        <p class="text-sm text-slate-600 mt-2">প্রথম শ্রেণী তৈরি করুন</p>
+                    </div>
+                `;
+                totalClasses.textContent = "0 Classes";
+                return;
+            }
+            
+            classesDiv.innerHTML = '';
+            totalClasses.textContent = `${classesList.length} Classes`;
+            
+            classesList.forEach(cls => {
+                const classDiv = document.createElement('div');
+                classDiv.className = `p-4 bg-slate-900/50 rounded-xl border ${cls.active ? 'border-green-500/30' : 'border-slate-700'}`;
+                
+                const classColor = getClassColor(cls.code);
+                
+                classDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold text-slate-200">${cls.name_bn}</h4>
+                            <p class="text-sm text-slate-400">${cls.name_en || cls.code}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${cls.active ? '<span class="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded">Active</span>' : ''}
+                            ${cls.featured ? '<span class="text-xs bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">Featured</span>' : ''}
+                            <button onclick="editClass('${cls.id}')" class="text-blue-400 hover:text-blue-300">✏️</button>
+                            <button onclick="deleteClass('${cls.id}')" class="text-red-400 hover:text-red-300">🗑️</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 mb-3">
+                        <span class="class-badge ${classColor}">${cls.code}</span>
+                        ${cls.main_subject ? `<span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded">${cls.main_subject}</span>` : ''}
+                        <span class="text-xs text-slate-500">${cls.student_count || 0} Students</span>
+                    </div>
+                    
+                    ${cls.description ? `<p class="text-sm text-slate-400 mb-2">${cls.description}</p>` : ''}
+                    
+                    <div class="text-xs text-slate-500">
+                        Created: ${new Date(cls.createdAt).toLocaleDateString('bn-BD')}
+                    </div>
+                `;
+                
+                classesDiv.appendChild(classDiv);
+            });
+        }
+
+        function getClassColor(classCode) {
+            const colors = {
+                'nine': 'bg-blue-100 text-blue-800',
+                'ten': 'bg-green-100 text-green-800',
+                'eleven': 'bg-purple-100 text-purple-800',
+                'twelve': 'bg-red-100 text-red-800',
+                'hsc': 'bg-indigo-100 text-indigo-800',
+                'ssc': 'bg-amber-100 text-amber-800',
+                'admission': 'bg-pink-100 text-pink-800'
+            };
+            return colors[classCode] || 'bg-gray-100 text-gray-800';
+        }
+
+        function addNewClass() {
+            const code = document.getElementById('class_code').value.trim().toLowerCase();
+            const nameBn = document.getElementById('class_name_bn').value.trim();
+            const nameEn = document.getElementById('class_name_en').value.trim();
+            const description = document.getElementById('class_description').value.trim();
+            const mainSubject = document.getElementById('class_main_subject').value.trim();
+            const studentCount = parseInt(document.getElementById('class_student_count').value) || 0;
+            const active = document.getElementById('class_active').checked;
+            const featured = document.getElementById('class_featured').checked;
+            
+            // Validation
+            if(!code || !nameBn) {
+                alert("শ্রেণীর কোড এবং বাংলা নাম পূরণ করুন!");
+                return;
+            }
+            
+            // Check if class already exists
+            if(classesList.some(cls => cls.code === code)) {
+                alert("এই শ্রেণীর কোড ইতিমধ্যে আছে!");
+                return;
+            }
+            
+            const classData = {
+                code: code,
+                name_bn: nameBn,
+                name_en: nameEn || code,
+                description: description || null,
+                main_subject: mainSubject || null,
+                student_count: studentCount,
+                active: active,
+                featured: featured,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
+            
+            // Save to Firebase
+            const newRef = db.ref('classes').push();
+            classData.id = newRef.key;
+            
+            newRef.set(classData).then(() => {
+                alert("✅ শ্রেণী সফলভাবে তৈরি হয়েছে!");
+                
+                // Clear form
+                document.getElementById('class_code').value = '';
+                document.getElementById('class_name_bn').value = '';
+                document.getElementById('class_name_en').value = '';
+                document.getElementById('class_description').value = '';
+                document.getElementById('class_main_subject').value = '';
+                document.getElementById('class_student_count').value = '0';
+                
+                // Reload classes
+                loadClasses();
+                
+            }).catch(error => {
+                alert("ত্রুটি: " + error.message);
+            });
+        }
+
+        function editClass(classId) {
+            const cls = classesList.find(c => c.id === classId);
+            if(!cls) return;
+            
+            // Fill form with class data
+            document.getElementById('class_code').value = cls.code;
+            document.getElementById('class_name_bn').value = cls.name_bn;
+            document.getElementById('class_name_en').value = cls.name_en || '';
+            document.getElementById('class_description').value = cls.description || '';
+            document.getElementById('class_main_subject').value = cls.main_subject || '';
+            document.getElementById('class_student_count').value = cls.student_count || 0;
+            document.getElementById('class_active').checked = cls.active || false;
+            document.getElementById('class_featured').checked = cls.featured || false;
+            
+            // Change button text
+            const submitBtn = document.querySelector('#class-sec button[onclick="addNewClass()"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = "🔄 শ্রেণী আপডেট করুন";
+            submitBtn.onclick = function() { updateClass(classId); };
+            
+            // Store original function
+            submitBtn.dataset.original = originalText;
+        }
+
+        function updateClass(classId) {
+            const code = document.getElementById('class_code').value.trim().toLowerCase();
+            const nameBn = document.getElementById('class_name_bn').value.trim();
+            const nameEn = document.getElementById('class_name_en').value.trim();
+            const description = document.getElementById('class_description').value.trim();
+            const mainSubject = document.getElementById('class_main_subject').value.trim();
+            const studentCount = parseInt(document.getElementById('class_student_count').value) || 0;
+            const active = document.getElementById('class_active').checked;
+            const featured = document.getElementById('class_featured').checked;
+            
+            // Validation
+            if(!code || !nameBn) {
+                alert("শ্রেণীর কোড এবং বাংলা নাম পূরণ করুন!");
+                return;
+            }
+            
+            const classData = {
+                code: code,
+                name_bn: nameBn,
+                name_en: nameEn || code,
+                description: description || null,
+                main_subject: mainSubject || null,
+                student_count: studentCount,
+                active: active,
+                featured: featured,
+                updatedAt: Date.now()
+            };
+            
+            // Update in Firebase
+            db.ref(`classes/${classId}`).update(classData).then(() => {
+                alert("✅ শ্রেণী সফলভাবে আপডেট হয়েছে!");
+                
+                // Reset form and button
+                const submitBtn = document.querySelector('#class-sec button[onclick="updateClass(\'' + classId + '\')"]');
+                submitBtn.innerHTML = submitBtn.dataset.original;
+                submitBtn.onclick = function() { addNewClass(); };
+                
+                // Clear form
+                document.getElementById('class_code').value = '';
+                document.getElementById('class_name_bn').value = '';
+                document.getElementById('class_name_en').value = '';
+                document.getElementById('class_description').value = '';
+                document.getElementById('class_main_subject').value = '';
+                document.getElementById('class_student_count').value = '0';
+                document.getElementById('class_active').checked = true;
+                document.getElementById('class_featured').checked = false;
+                
+                // Reload classes
+                loadClasses();
+                
+            }).catch(error => {
+                alert("ত্রুটি: " + error.message);
+            });
+        }
+
+        function deleteClass(classId) {
+            if(confirm("এই শ্রেণী ডিলিট করতে চান? সব বিষয় এবং MCQ প্রশ্নও ডিলিট হবে!")) {
+                db.ref(`classes/${classId}`).remove().then(() => {
+                    alert("✅ শ্রেণী ডিলিট হয়েছে!");
+                    loadClasses();
+                }).catch(error => {
+                    alert("ত্রুটি: " + error.message);
+                });
+            }
+        }
+
+        function updateClassDropdowns() {
+            const classDropdown = document.getElementById('json_class');
+            classDropdown.innerHTML = '<option value="">শ্রেণী নির্বাচন করুন</option>';
+            
+            classesList.forEach(cls => {
+                if(cls.active) {
+                    classDropdown.innerHTML += `<option value="${cls.code}">${cls.name_bn} (${cls.code})</option>`;
+                }
+            });
+        }
+
+        function updateJsonSubjectList() {
+            const classCode = document.getElementById('json_class').value;
+            const subjectDropdown = document.getElementById('json_subject');
+            
+            if(!classCode) {
+                subjectDropdown.innerHTML = '<option value="">প্রথম শ্রেণী নির্বাচন করুন</option>';
+                return;
+            }
+            
+            // In a real app, you would load subjects from Firebase based on class
+            // For now, show common subjects
+            const subjects = {
+                'physics': 'পদার্থবিজ্ঞান',
+                'chemistry': 'রসায়ন',
+                'math': 'গণিত',
+                'biology': 'জীববিজ্ঞান',
+                'bangla': 'বাংলা',
+                'english': 'ইংরেজি',
+                'ict': 'তথ্য ও যোগাযোগ প্রযুক্তি'
+            };
+            
+            subjectDropdown.innerHTML = '<option value="">বিষয় নির্বাচন করুন</option>';
+            Object.keys(subjects).forEach(code => {
+                subjectDropdown.innerHTML += `<option value="${code}">${subjects[code]}</option>`;
+            });
+        }
+
+        function loadClassStats() {
+            // Update class count
+            document.getElementById('class-count').textContent = classesList.length;
+            document.getElementById('stat-class-count').textContent = classesList.length;
+            
+            // Count active classes
+            const activeClasses = classesList.filter(cls => cls.active);
+            document.getElementById('stat-active-classes').textContent = activeClasses.length;
+            
+            // Load other stats from Firebase
+            db.ref('qbank').once('value', snapshot => {
+                const data = snapshot.val();
+                let subjectCount = 0;
+                let mcqCount = 0;
+                let subjects = new Set();
+                
+                function countStats(obj) {
+                    if(!obj) return;
+                    
+                    for(let key in obj) {
+                        if(obj[key] && typeof obj[key] === 'object') {
+                            if(obj[key].type === 'mcq' || obj[key].type === 'mcq_set') {
+                                mcqCount++;
+                                if(obj[key].subject) subjects.add(obj[key].subject);
+                            }
+                            countStats(obj[key]);
+                        }
+                    }
+                }
+                
+                countStats(data);
+                
+                document.getElementById('stat-subject-count').textContent = subjects.size;
+                document.getElementById('stat-mcq-count').textContent = mcqCount;
+            });
+        }
+
+        // ============ JSON UPLOAD FUNCTIONS ============
+        function setupDropZone() {
+            const dropZone = document.getElementById('json-drop-zone');
+            const fileInput = document.getElementById('json-drop-input');
+            
+            // Click to select file
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Drag and drop events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropZone.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                dropZone.classList.remove('dragover');
+            }
+            
+            // Handle dropped files
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if(files.length > 0) {
+                    handleJsonFile(files[0]);
+                }
+            }
+            
+            // Handle file input change
+            fileInput.addEventListener('change', function(e) {
+                if(this.files.length > 0) {
+                    handleJsonFile(this.files[0]);
+                }
+            });
+        }
+
+        function handleJsonFile(file) {
+            if(!file.name.endsWith('.json')) {
+                alert("শুধুমাত্র JSON ফাইল আপলোড করুন!");
+                return;
+            }
+            
+            const dropZone = document.getElementById('json-drop-zone');
+            dropZone.classList.add('active');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    currentJsonData = jsonData;
+                    
+                    // Update drop zone with file info
+                    dropZone.innerHTML = `
+                        <div class="text-4xl mb-3">✅</div>
+                        <h4 class="text-lg font-bold mb-1 text-green-300">${file.name}</h4>
+                        <p class="text-sm text-slate-400 mb-2">${(file.size / 1024).toFixed(2)} KB</p>
+                        <p class="text-sm text-green-400">ফাইল সফলভাবে লোড হয়েছে!</p>
+                        <button onclick="resetDropZone()" class="mt-4 text-sm text-slate-400 hover:text-white">
+                            অন্য ফাইল সিলেক্ট করুন
+                        </button>
+                    `;
+                    
+                    // Auto-fill form if data has class/subject info
+                    if(jsonData.setInfo) {
+                        if(jsonData.setInfo.class) {
+                            document.getElementById('json_class').value = jsonData.setInfo.class;
+                            updateJsonSubjectList();
+                        }
+                        if(jsonData.setInfo.subject) {
+                            document.getElementById('json_subject').value = jsonData.setInfo.subject;
+                        }
+                        if(jsonData.setInfo.chapter) {
+                            document.getElementById('json_chapter').value = jsonData.setInfo.chapter;
+                        }
+                        if(jsonData.setInfo.difficulty) {
+                            document.getElementById('json_difficulty').value = jsonData.setInfo.difficulty;
+                        }
+                    }
+                    
+                } catch(error) {
+                    alert("JSON ফাইল পার্স করতে সমস্যা: " + error.message);
+                    resetDropZone();
+                }
+            };
+            
+            reader.onerror = function() {
+                alert("ফাইল পড়তে সমস্যা!");
+                resetDropZone();
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function resetDropZone() {
+            const dropZone = document.getElementById('json-drop-zone');
+            dropZone.classList.remove('active');
+            dropZone.innerHTML = `
+                <div class="text-5xl mb-4">📁</div>
+                <h4 class="text-xl font-bold mb-2 text-slate-300">JSON ফাইল ড্রপ করুন</h4>
+                <p class="text-slate-400 mb-4">বা ক্লিক করে সিলেক্ট করুন</p>
+                <button onclick="document.getElementById('json-drop-input').click()" class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 rounded-xl font-bold">
+                    ফাইল সিলেক্ট করুন
+                </button>
+                <p class="text-xs text-slate-500 mt-4">সমর্থিত ফরম্যাট: JSON</p>
+            `;
+            currentJsonData = null;
+        }
+
+        function showJsonTemplate() {
+            document.getElementById('json-template-modal').classList.remove('hidden');
+        }
+
+        function hideJsonTemplate() {
+            document.getElementById('json-template-modal').classList.add('hidden');
+        }
+
+        function showJsonPaste() {
+            document.getElementById('json-paste-modal').classList.remove('hidden');
+        }
+
+        function hideJsonPaste() {
+            document.getElementById('json-paste-modal').classList.add('hidden');
+        }
+
+        function processPastedJson() {
+            const jsonText = document.getElementById('json-paste-area').value.trim();
+            
+            if(!jsonText) {
+                alert("JSON টেক্সট পেস্ট করুন!");
+                return;
+            }
+            
+            try {
+                const jsonData = JSON.parse(jsonText);
+                currentJsonData = jsonData;
+                
+                // Auto-fill form if data has class/subject info
+                if(jsonData.setInfo) {
+                    if(jsonData.setInfo.class) {
+                        document.getElementById('json_class').value = jsonData.setInfo.class;
+                        updateJsonSubjectList();
+                    }
+                    if(jsonData.setInfo.subject) {
+                        document.getElementById('json_subject').value = jsonData.setInfo.subject;
+                    }
+                    if(jsonData.setInfo.chapter) {
+                        document.getElementById('json_chapter').value = jsonData.setInfo.chapter;
+                    }
+                    if(jsonData.setInfo.difficulty) {
+                        document.getElementById('json_difficulty').value = jsonData.setInfo.difficulty;
+                    }
+                }
+                
+                alert("✅ JSON সফলভাবে পার্স হয়েছে!");
+                hideJsonPaste();
+                
+            } catch(error) {
+                alert("JSON পার্স করতে সমস্যা: " + error.message);
+            }
+        }
+
+        function downloadJsonTemplate() {
+            const template = {
+                setInfo: {
+                    title: "পদার্থবিজ্ঞান ১ম অধ্যায় MCQ সেট",
+                    description: "বল সম্পর্কিত প্রশ্ন",
+                    class: "nine",
+                    subject: "physics",
+                    chapter: "বল",
+                    difficulty: "medium"
+                },
+                questions: [
+                    {
+                        id: 1,
+                        title: "নিউটনের প্রথম গতিসূত্র কোনটি?",
+                        description: "জড়তার সূত্র সম্পর্কিত প্রশ্ন",
+                        options: {
+                            A: "বলের সমানুপাতিক",
+                            B: "ভরবেগের সংরক্ষণ",
+                            C: "জড়তা",
+                            D: "ক্রিয়া-প্রতিক্রিয়া"
+                        },
+                        answer: "C",
+                        explanation: "নিউটনের প্রথম গতিসূত্র জড়তার সূত্র নামে পরিচিত",
+                        difficulty: "easy",
+                        marks: 1
+                    },
+                    {
+                        id: 2,
+                        title: "ভরবেগের সংরক্ষণ সূত্র কার?",
+                        description: "ভরবেগ সম্পর্কিত প্রশ্ন",
+                        options: {
+                            A: "নিউটন",
+                            B: "আইনস্টাইন",
+                            C: "গ্যালিলিও",
+                            D: "কেপলার"
+                        },
+                        answer: "A",
+                        explanation: "ভরবেগের সংরক্ষণ সূত্র নিউটনের",
+                        difficulty: "medium",
+                        marks: 1
+                    }
+                ]
+            };
+            
+            const dataStr = JSON.stringify(template, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'mcq_template.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        async function processJsonUpload() {
+            if(!currentJsonData) {
+                alert("প্রথমে JSON ফাইল লোড করুন!");
+                return;
+            }
+            
+            const classCode = document.getElementById('json_class').value;
+            const subject = document.getElementById('json_subject').value;
+            const chapter = document.getElementById('json_chapter').value;
+            const difficulty = document.getElementById('json_difficulty').value;
+            const folder = document.getElementById('json_folder').value;
+            const createSet = document.getElementById('json_create_set').checked;
+            
+            if(!classCode || !subject || !folder) {
+                alert("শ্রেণী, বিষয় এবং ফোল্ডার নির্বাচন করুন!");
+                return;
+            }
+            
+            // Show progress
+            const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const progressDetails = document.getElementById('progress-details');
+            
+            progressDiv.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressDetails.textContent = 'প্রসেসিং শুরু...';
+            
+            let questions = [];
+            
+            // Extract questions from JSON data
+            if(currentJsonData.questions && Array.isArray(currentJsonData.questions)) {
+                questions = currentJsonData.questions;
+            } else if(currentJsonData.singleMCQs && Array.isArray(currentJsonData.singleMCQs)) {
+                questions = currentJsonData.singleMCQs;
+            } else {
+                alert("JSON-এ প্রশ্ন পাওয়া যায়নি!");
+                progressDiv.classList.add('hidden');
+                return;
+            }
+            
+            if(questions.length === 0) {
+                alert("JSON-এ কোন প্রশ্ন নেই!");
+                progressDiv.classList.add('hidden');
+                return;
+            }
+            
+            if(createSet) {
+                // Create as MCQ Set
+                const setTitle = currentJsonData.setInfo?.title || `${subject} MCQ সেট`;
+                const setDescription = currentJsonData.setInfo?.description || `${chapter} সম্পর্কিত প্রশ্ন`;
+                
+                const setData = {
+                    title: setTitle,
+                    type: 'mcq_set',
+                    description: setDescription,
+                    class: classCode,
+                    subject: subject,
+                    chapter: chapter || currentJsonData.setInfo?.chapter || 'সাধারণ',
+                    difficulty: difficulty,
+                    questionCount: questions.length,
+                    time: Date.now(),
+                    published: true,
+                    createdBy: 'JSON Upload'
+                };
+                
+                const setId = `JSON_${Date.now()}`;
+                const setPath = `${folder}/${setId}`;
+                
+                try {
+                    // Save set metadata
+                    await db.ref(setPath).set(setData);
+                    
+                    // Save each question
+                    let successCount = 0;
+                    for(let i = 0; i < questions.length; i++) {
+                        const q = questions[i];
+                        
+                        const questionData = {
+                            title: q.title,
+                            type: 'mcq',
+                            description: q.description || null,
+                            class: q.class || classCode,
+                            subject: q.subject || subject,
+                            chapter: q.chapter || chapter || 'সাধারণ',
+                            difficulty: q.difficulty || difficulty,
+                            options: q.options,
+                            answer: q.answer || 'A',
+                            explanation: q.explanation || null,
+                            time: Date.now()
+                        };
+                        
+                        await db.ref(setPath).child(`q${i + 1}`).set(questionData);
+                        successCount++;
+                        
+                        // Update progress
+                        const progress = ((i + 1) / questions.length) * 100;
+                        progressBar.style.width = `${progress}%`;
+                        progressPercent.textContent = `${Math.round(progress)}%`;
+                        progressDetails.textContent = `প্রশ্ন ${i + 1}/${questions.length} সংরক্ষণ করা হচ্ছে...`;
+                    }
+                    
+                    // Complete
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressDetails.innerHTML = `<span class="text-green-400">✅ ${successCount} টি প্রশ্ন সফলভাবে সংরক্ষণ হয়েছে!</span>`;
+                    
+                    setTimeout(() => {
+                        alert(`✅ MCQ সেট সফলভাবে তৈরি হয়েছে! ${successCount} টি প্রশ্ন যুক্ত হয়েছে।`);
+                        progressDiv.classList.add('hidden');
+                        resetDropZone();
+                        loadClassStats();
+                    }, 1000);
+                    
+                } catch(error) {
+                    alert("ত্রুটি: " + error.message);
+                    progressDiv.classList.add('hidden');
+                }
+                
+            } else {
+                // Save as individual MCQs
+                let successCount = 0;
+                const totalQuestions = questions.length;
+                
+                for(let i = 0; i < totalQuestions; i++) {
+                    const q = questions[i];
+                    
+                    const questionData = {
+                        title: q.title,
+                        type: 'mcq',
+                        description: q.description || null,
+                        class: q.class || classCode,
+                        subject: q.subject || subject,
+                        chapter: q.chapter || chapter || 'সাধারণ',
+                        difficulty: q.difficulty || difficulty,
+                        options: q.options,
+                        answer: q.answer || 'A',
+                        explanation: q.explanation || null,
+                        time: Date.now(),
+                        uploadedBy: 'JSON Upload'
+                    };
+                    
+                    try {
+                        await db.ref(folder).push(questionData);
+                        successCount++;
+                    } catch(error) {
+                        console.error("Error saving question:", error);
+                    }
+                    
+                    // Update progress
+                    const progress = ((i + 1) / totalQuestions) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressPercent.textContent = `${Math.round(progress)}%`;
+                    progressDetails.textContent = `প্রশ্ন ${i + 1}/${totalQuestions} সংরক্ষণ করা হচ্ছে...`;
+                }
+                
+                // Complete
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressDetails.innerHTML = `<span class="text-green-400">✅ ${successCount} টি MCQ সফলভাবে সংরক্ষণ হয়েছে!</span>`;
+                
+                setTimeout(() => {
+                    alert(`✅ ${successCount} টি MCQ প্রশ্ন সফলভাবে আপলোড হয়েছে!`);
+                    progressDiv.classList.add('hidden');
+                    resetDropZone();
+                    loadClassStats();
+                }, 1000);
+            }
+        }
+
+        // ============ UTILITY FUNCTIONS ============
+        function loadFolders() {
+            const folderSelect = document.getElementById('json_folder');
+            folderSelect.innerHTML = '<option value="">-- ফোল্ডার নির্বাচন করুন --</option>';
+            
+            db.ref('qbank').once('value', snapshot => {
+                const data = snapshot.val();
+                
+                if(data) {
+                    Object.keys(data).forEach(folder => {
+                        if(folder !== '_init') {
+                            const path = `qbank/${folder}`;
+                            folderSelect.innerHTML += `<option value="${path}">📂 ${folder}</option>`;
+                        }
+                    });
+                }
+                
+                // Add option to create new folder
+                folderSelect.innerHTML += `<option value="new">➕ নতুন ফোল্ডার তৈরি করুন</option>`;
+            });
+        }
+    </script>
+</body>
+</html>
