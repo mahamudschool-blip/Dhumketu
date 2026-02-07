@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhumketu Admin | Edit Content</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background: #0f172a; color: #f1f5f9; }
+        .input-box { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 12px; width: 100%; color: white; margin-bottom: 1rem; outline: none; }
+        .input-box:focus { border-color: #3b82f6; }
+        .content-type-btn { padding: 10px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s; }
+        .content-type-btn.active { background: #3b82f6; color: white; }
+        .mcq-option { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+        .question-item { background: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #334155; }
+        .preview-image { max-width: 200px; border-radius: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-3xl font-black text-blue-500 italic">DHUMKETU CONTENT EDITOR</h1>
+                <p class="text-slate-400 mt-2">Edit any content: Posts, MCQ Sets, Videos, PDFs</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="window.location.href='admin.html'" class="bg-slate-800 px-6 py-2 rounded-xl text-sm font-bold hover:bg-slate-700">← Admin Home</button>
+                <button onclick="window.location.href='index.html'" class="bg-green-600 px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-700">View Site</button>
+            </div>
+        </header>
+
+        <!-- Content Type Selection -->
+        <div class="bg-slate-800 p-6 rounded-2xl mb-8">
+            <h2 class="text-xl font-bold mb-4 text-yellow-400">১. কন্টেন্ট টাইপ নির্বাচন করুন</h2>
+            <div class="flex flex-wrap gap-3">
+                <div onclick="selectType('all')" class="content-type-btn active bg-blue-600">সব কন্টেন্ট</div>
+                <div onclick="selectType('post')" class="content-type-btn bg-slate-700 hover:bg-slate-600">📝 পোস্ট</div>
+                <div onclick="selectType('mcq_set')" class="content-type-btn bg-slate-700 hover:bg-slate-600">📚 MCQ সেট</div>
+                <div onclick="selectType('mcq')" class="content-type-btn bg-slate-700 hover:bg-slate-600">❓ সিঙ্গেল MCQ</div>
+                <div onclick="selectType('video')" class="content-type-btn bg-slate-700 hover:bg-slate-600">🎥 ভিডিও</div>
+                <div onclick="selectType('pdf')" class="content-type-btn bg-slate-700 hover:bg-slate-600">📄 PDF</div>
+                <div onclick="selectType('image')" class="content-type-btn bg-slate-700 hover:bg-slate-600">🖼️ ইমেজ</div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="bg-slate-800 p-6 rounded-2xl mb-8">
+            <h2 class="text-xl font-bold mb-4 text-purple-400">২. কন্টেন্ট খুঁজুন</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <input type="text" id="searchTitle" placeholder="টাইটেল দিয়ে সার্চ করুন..." class="input-box">
+                <input type="text" id="searchPath" placeholder="পাথ দিয়ে সার্চ (contents/...)" class="input-box">
+                <button onclick="searchContent()" class="bg-indigo-600 p-3 rounded-xl font-bold hover:bg-indigo-700">🔍 সার্চ করুন</button>
+            </div>
+            <button onclick="loadAllContent()" class="bg-green-600 p-3 rounded-xl font-bold hover:bg-green-700 w-full">🔄 সব কন্টেন্ট রিলোড করুন</button>
+        </div>
+
+        <!-- Content List -->
+        <div id="content-list" class="space-y-4 mb-12">
+            <div class="text-center p-10 text-slate-400">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                <p>কন্টেন্ট লোড হচ্ছে...</p>
+            </div>
+        </div>
+
+        <!-- Edit Form (Hidden by default) -->
+        <div id="edit-form-container" class="hidden">
+            <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 mb-12">
+                <h2 class="text-2xl font-bold mb-6 text-green-400 flex items-center gap-3">
+                    <span>✏️ কন্টেন্ট এডিট করুন</span>
+                    <span id="current-edit-id" class="text-sm bg-slate-700 px-3 py-1 rounded-full"></span>
+                </h2>
+                
+                <!-- Basic Info -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">মৌলিক তথ্য</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-2">কন্টেন্ট টাইপ</label>
+                            <select id="edit-type" class="input-box" onchange="toggleEditFields()">
+                                <option value="post">📝 পোস্ট</option>
+                                <option value="mcq_set">📚 MCQ সেট</option>
+                                <option value="mcq">❓ সিঙ্গেল MCQ</option>
+                                <option value="video">🎥 ভিডিও</option>
+                                <option value="pdf">📄 PDF</option>
+                                <option value="image">🖼️ ইমেজ</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-2">ডাটাবেস পাথ</label>
+                            <input id="edit-path" type="text" class="input-box" placeholder="contents/folder/subfolder">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm text-slate-300 mb-2">টাইটেল</label>
+                        <input id="edit-title" type="text" class="input-box" placeholder="কন্টেন্টের টাইটেল">
+                    </div>
+                </div>
+
+                <!-- Post Fields -->
+                <div id="edit-post-fields" class="hidden mb-8">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">পোস্ট কন্টেন্ট</h3>
+                    <textarea id="edit-body" rows="6" placeholder="পোস্টের বিস্তারিত লেখা..." class="input-box"></textarea>
+                    <textarea id="edit-json" rows="4" placeholder="JSON কোড (যদি থাকে)..." class="input-box font-mono text-xs mt-4"></textarea>
+                </div>
+
+                <!-- Video/PDF Fields -->
+                <div id="edit-media-fields" class="hidden mb-8">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">মিডিয়া লিঙ্ক</h3>
+                    <input id="edit-url" type="text" class="input-box" placeholder="YouTube/Drive/Direct লিঙ্ক">
+                </div>
+
+                <!-- Single MCQ Fields -->
+                <div id="edit-mcq-fields" class="hidden mb-8">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">সিঙ্গেল MCQ</h3>
+                    <textarea id="edit-mcq-question" rows="3" placeholder="প্রশ্ন লিখুন..." class="input-box mb-4"></textarea>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="mcq-option">
+                            <span class="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">A</span>
+                            <input id="edit-opt-a" type="text" class="input-box flex-1" placeholder="Option A">
+                        </div>
+                        <div class="mcq-option">
+                            <span class="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">B</span>
+                            <input id="edit-opt-b" type="text" class="input-box flex-1" placeholder="Option B">
+                        </div>
+                        <div class="mcq-option">
+                            <span class="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">C</span>
+                            <input id="edit-opt-c" type="text" class="input-box flex-1" placeholder="Option C">
+                        </div>
+                        <div class="mcq-option">
+                            <span class="w-8 h-8 bg-slate-700 rounded flex items-center justify-center">D</span>
+                            <input id="edit-opt-d" type="text" class="input-box flex-1" placeholder="Option D">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-2">সঠিক উত্তর</label>
+                            <select id="edit-correct-ans" class="input-box">
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-2">ব্যাখ্যা</label>
+                            <input id="edit-explanation" type="text" class="input-box" placeholder="ব্যাখ্যা লিখুন">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MCQ Set Fields -->
+                <div id="edit-mcqset-fields" class="hidden mb-8">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">MCQ সেট প্রশ্নসমূহ</h3>
+                    <div id="mcqset-questions-container" class="space-y-4">
+                        <!-- Questions will be added here dynamically -->
+                    </div>
+                    <button onclick="addNewQuestionToSet()" class="mt-4 bg-indigo-600 p-3 rounded-xl font-bold hover:bg-indigo-700 w-full">+ নতুন প্রশ্ন যোগ করুন</button>
+                </div>
+
+                <!-- Image Upload -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">ছবি আপলোড</h3>
+                    <div class="flex items-center gap-4 mb-4">
+                        <input type="file" id="edit-image" accept="image/*" class="input-box">
+                        <button onclick="uploadEditImage()" class="bg-purple-600 px-6 py-3 rounded-xl font-bold hover:bg-purple-700 whitespace-nowrap">ছবি আপলোড</button>
+                    </div>
+                    <div id="edit-image-preview" class="mt-4">
+                        <!-- Image preview will appear here -->
+                    </div>
+                    <input id="edit-image-url" type="hidden">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-4">
+                    <button onclick="saveEditedContent()" class="flex-1 bg-green-600 p-4 rounded-xl font-bold hover:bg-green-700 text-lg">💾 পরিবর্তনগুলো সংরক্ষণ করুন</button>
+                    <button onclick="cancelEdit()" class="flex-1 bg-red-600 p-4 rounded-xl font-bold hover:bg-red-700 text-lg">✖️ বাতিল করুন</button>
+                    <button onclick="deleteCurrentContent()" class="flex-1 bg-slate-700 p-4 rounded-xl font-bold hover:bg-slate-600 text-lg">🗑️ ডিলিট করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- JSON Import for MCQ Sets -->
+        <div id="json-import-section" class="bg-slate-800 p-8 rounded-2xl border border-slate-700 mt-12">
+            <h2 class="text-xl font-bold mb-4 text-yellow-400">JSON থেকে MCQ সেট ইম্পোর্ট</h2>
+            <textarea id="import-json" rows="8" placeholder="MCQ সেটের JSON পেস্ট করুন..." class="input-box font-mono text-xs"></textarea>
+            <div class="flex gap-4 mt-4">
+                <button onclick="importJSONToMCQSet()" class="flex-1 bg-indigo-600 p-4 rounded-xl font-bold hover:bg-indigo-700">JSON ইম্পোর্ট করুন</button>
+                <button onclick="clearMCQSet()" class="flex-1 bg-red-600 p-4 rounded-xl font-bold hover:bg-red-700">সব প্রশ্ন ডিলিট করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="edit.js"></script>
+</body>
+</html>
