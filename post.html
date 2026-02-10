@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Post | Dhumketu Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-slate-50 p-5 md:p-10">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-black text-slate-800">📝 নতুন পোস্ট তৈরি করুন</h1>
+            <a href="admin.html" class="bg-slate-200 px-5 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-300">ফিরে যান</a>
+        </div>
+
+        <div class="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Target Path (Firebase)</label>
+                    <input type="text" id="postPath" placeholder="contents/physics" class="w-full p-4 bg-slate-50 rounded-2xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Post Title</label>
+                    <input type="text" id="postTitle" placeholder="পোস্টের শিরোনাম..." class="w-full p-4 bg-slate-50 rounded-2xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Featured Image URL</label>
+                <input type="text" id="postImgUrl" placeholder="https://..." class="w-full p-4 bg-slate-50 rounded-2xl border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Post Content</label>
+                <div id="editor" class="h-80 bg-white rounded-b-2xl"></div>
+            </div>
+
+            <button onclick="savePost()" class="w-full bg-indigo-600 text-white font-black py-5 rounded-[2rem] shadow-xl hover:bg-indigo-700 transition active:scale-95">
+                PUBLISH POST 🚀
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="post.js"></script>
+</body>
+</html>
